@@ -6,6 +6,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Configuration;
 using Landing.Infrastructure.Data;
 using Landing.Core.Models;
+using Landing.Infrastructure.Repositories;
+using Microsoft.AspNetCore.Identity.Data;
 namespace LendingAPI.Controllers
 {
     [Route("api/[controller]")]
@@ -31,7 +33,22 @@ namespace LendingAPI.Controllers
             var token = GenerateJwtToken(user);
             return Ok(new { Token = token });
         }
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] RegisterRequest request, [FromServices] UserRepository userRepository)
+        {
+            var existingUser = await userRepository.GetUserByEmailAsync(request.Email);
+            if (existingUser != null)
+                return BadRequest("Пользователь с таким email уже существует");
 
+            var newUser = new User
+            {
+                Email = request.Email,
+                Role = "User"
+            };
+
+            await userRepository.CreateUserAsync(newUser, request.Password);
+            return Ok("Пользователь зарегистрирован");
+        }
 
         private string GenerateJwtToken(User user)
         {
@@ -58,6 +75,11 @@ namespace LendingAPI.Controllers
     }
 
     public class LoginRequest
+    {
+        public string Email { get; set; }
+        public string Password { get; set; }
+    }
+    public class RegisterRequest
     {
         public string Email { get; set; }
         public string Password { get; set; }

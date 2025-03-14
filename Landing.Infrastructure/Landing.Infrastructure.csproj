@@ -18,6 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Landing.Application\Landing.Application.csproj" />
     <ProjectReference Include="..\Landing.Core\Landing.Core.csproj" />
   </ItemGroup>
 

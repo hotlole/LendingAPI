@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Landing.Application\Landing.Application.csproj" />
     <ProjectReference Include="..\Landing.Core\Landing.Core.csproj" />
     <ProjectReference Include="..\Landing.Infrastructure\Landing.Infrastructure.csproj" />
   </ItemGroup>

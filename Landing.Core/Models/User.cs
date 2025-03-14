@@ -1,10 +1,19 @@
-﻿namespace Landing.Core.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Landing.Core.Models
 {
     public class User
     {
+        [Key]
         public int Id { get; set; }
-        public string Email { get; set; } = string.Empty;
-        public string PasswordHash { get; set; } = string.Empty;
-        public string Role { get; set; } = "User";  // "Admin" или "User"
+
+        [Required, EmailAddress]
+        public string Email { get; set; }
+
+        [Required]
+        public string PasswordHash { get; set; }  // Храним хэш пароля
+
+        [Required]
+        public string Role { get; set; } = "User";
     }
 }
