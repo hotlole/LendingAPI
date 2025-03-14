@@ -5,6 +5,10 @@ VisualStudioVersion = 17.10.35013.160
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LendingAPI", "LendingAPI\LendingAPI.csproj", "{844B0F4B-6F6D-401F-9B04-0CC5CD47CB0B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Landing.Core", "Landing.Core\Landing.Core.csproj", "{BB2D0BB3-0465-4AE2-8033-B383AF4DC0D0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Landing.Infrastructure", "Landing.Infrastructure\Landing.Infrastructure.csproj", "{10C5285F-00FE-49BF-9E04-31E85D5D8C7A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +19,14 @@ Global
 		{844B0F4B-6F6D-401F-9B04-0CC5CD47CB0B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{844B0F4B-6F6D-401F-9B04-0CC5CD47CB0B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{844B0F4B-6F6D-401F-9B04-0CC5CD47CB0B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BB2D0BB3-0465-4AE2-8033-B383AF4DC0D0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BB2D0BB3-0465-4AE2-8033-B383AF4DC0D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BB2D0BB3-0465-4AE2-8033-B383AF4DC0D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BB2D0BB3-0465-4AE2-8033-B383AF4DC0D0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{10C5285F-00FE-49BF-9E04-31E85D5D8C7A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{10C5285F-00FE-49BF-9E04-31E85D5D8C7A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{10C5285F-00FE-49BF-9E04-31E85D5D8C7A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{10C5285F-00FE-49BF-9E04-31E85D5D8C7A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
