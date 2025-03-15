@@ -14,30 +14,38 @@ namespace Landing.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<IEnumerable<Event>> GetAllAsync() => await _context.Events.ToListAsync();
+        public async Task<IEnumerable<Event>> GetAllAsync()
+        {
+            return await _context.Events.ToListAsync();
+        }
 
-        public async Task<Event?> GetByIdAsync(int id) => await _context.Events.FindAsync(id);
+        public async Task<Event?> GetByIdAsync(int id)
+        {
+            return await _context.Events.FindAsync(id);
+        }
 
-        public async Task AddAsync(Event eventItem)
+        public async Task<Event> CreateAsync(Event eventItem)
         {
             _context.Events.Add(eventItem);
             await _context.SaveChangesAsync();
+            return eventItem;
         }
 
-        public async Task UpdateAsync(Event eventItem)
+        public async Task<Event> UpdateAsync(Event eventItem)
         {
             _context.Events.Update(eventItem);
             await _context.SaveChangesAsync();
+            return eventItem;
         }
 
-        public async Task DeleteAsync(int id)
+        public async Task<bool> DeleteAsync(int id)
         {
             var eventItem = await _context.Events.FindAsync(id);
-            if (eventItem != null)
-            {
-                _context.Events.Remove(eventItem);
-                await _context.SaveChangesAsync();
-            }
+            if (eventItem == null) return false;
+
+            _context.Events.Remove(eventItem);
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }

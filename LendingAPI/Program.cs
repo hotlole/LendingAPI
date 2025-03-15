@@ -58,6 +58,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.MapControllers();
+app.UseStaticFiles();
 app.Run();
 
 // Метод для создания админа

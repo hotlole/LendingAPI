@@ -6,8 +6,8 @@ namespace Landing.Application.Interfaces
     {
         Task<IEnumerable<Event>> GetAllAsync();
         Task<Event?> GetByIdAsync(int id);
-        Task AddAsync(Event eventItem);
-        Task UpdateAsync(Event eventItem);
-        Task DeleteAsync(int id);
+        Task<Event> CreateAsync(Event eventItem);
+        Task<Event> UpdateAsync(Event eventItem);
+        Task<bool> DeleteAsync(int id);
     }
 }

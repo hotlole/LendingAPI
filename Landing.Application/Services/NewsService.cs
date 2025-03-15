@@ -12,14 +12,29 @@ namespace Landing.Application.Services
             _newsRepository = newsRepository;
         }
 
-        public async Task<IEnumerable<News>> GetAllAsync() => await _newsRepository.GetAllAsync();
+        public async Task<IEnumerable<News>> GetAllNewsAsync()
+        {
+            return await _newsRepository.GetAllAsync();
+        }
 
-        public async Task<News?> GetByIdAsync(int id) => await _newsRepository.GetByIdAsync(id);
+        public async Task<News?> GetNewsByIdAsync(int id)
+        {
+            return await _newsRepository.GetByIdAsync(id);
+        }
 
-        public async Task AddAsync(News news) => await _newsRepository.AddAsync(news);
+        public async Task AddNewsAsync(News news)
+        {
+            await _newsRepository.AddAsync(news);
+        }
 
-        public async Task UpdateAsync(News news) => await _newsRepository.UpdateAsync(news);
+        public async Task UpdateNewsAsync(News news)
+        {
+            await _newsRepository.UpdateAsync(news);
+        }
 
-        public async Task DeleteAsync(int id) => await _newsRepository.DeleteAsync(id);
+        public async Task DeleteNewsAsync(int id)
+        {
+            await _newsRepository.DeleteAsync(id);
+        }
     }
 }
