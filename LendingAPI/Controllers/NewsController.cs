@@ -1,10 +1,14 @@
 ﻿using Landing.Application.Services;
 using Landing.Core.Models;
+using LandingAPI.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LandingAPI.Controllers
 {
+    /// <summary>
+    /// Контроллер для управления новостями.
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class NewsController : ControllerBase
@@ -18,15 +22,29 @@ namespace LandingAPI.Controllers
             _environment = environment;
         }
 
-        // Получение всех новостей
+        /// <summary>
+        /// Получить список всех новостей.
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
             var news = await _newsService.GetAllNewsAsync();
-            return Ok(news);
+
+            var newsDtos = news.Select(n => new NewsDto
+            {
+                Id = n.Id,
+                Title = n.Title,
+                Description = n.Description,
+                ImageUrl = n.ImageUrl,
+                PublishedAt = n.PublishedAt
+            });
+
+            return Ok(newsDtos);
         }
 
-        // Получение новости по ID
+        /// <summary>
+        /// Получить новость по ID.
+        /// </summary>
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -34,46 +52,76 @@ namespace LandingAPI.Controllers
             if (newsItem == null)
                 return NotFound();
 
-            return Ok(newsItem);
+            var newsDto = new NewsDto
+            {
+                Id = newsItem.Id,
+                Title = newsItem.Title,
+                Description = newsItem.Description,
+                ImageUrl = newsItem.ImageUrl,
+                PublishedAt = newsItem.PublishedAt
+            };
+
+            return Ok(newsDto);
         }
 
-        // Создание новости с изображением
+        /// <summary>
+        /// Создать новость.
+        /// </summary>
         [Authorize(Roles = "Admin")]
         [HttpPost]
-        public async Task<IActionResult> Create([FromForm] News news, IFormFile? imageFile)
+        public async Task<IActionResult> Create([FromForm] CreateNewsDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (imageFile != null)
+            string? imagePath = null;
+            if (dto.ImageFile != null)
             {
-                string imagePath = await SaveImageAsync(imageFile);
-                news.ImageUrl = imagePath;
+                imagePath = await SaveImageAsync(dto.ImageFile);
             }
+
+            var news = new News
+            {
+                Title = dto.Title,
+                Description = dto.Description,
+                ImageUrl = imagePath,
+                PublishedAt = DateTime.UtcNow
+            };
 
             await _newsService.AddNewsAsync(news);
             return CreatedAtAction(nameof(GetById), new { id = news.Id }, news);
         }
 
-        // Обновление новости с изображением
+        /// <summary>
+        /// Обновить новость.
+        /// </summary>
         [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromForm] News news, IFormFile? imageFile)
+        public async Task<IActionResult> Update(int id, [FromForm] UpdateNewsDto dto)
         {
-            if (id != news.Id)
-                return BadRequest("ID в запросе не совпадает с ID объекта.");
+            var existingNews = await _newsService.GetNewsByIdAsync(id);
+            if (existingNews == null)
+                return NotFound();
 
-            if (imageFile != null)
+            if (!string.IsNullOrWhiteSpace(dto.Title))
+                existingNews.Title = dto.Title;
+
+            if (!string.IsNullOrWhiteSpace(dto.Description))
+                existingNews.Description = dto.Description;
+
+            if (dto.ImageFile != null)
             {
-                string imagePath = await SaveImageAsync(imageFile);
-                news.ImageUrl = imagePath;
+                string imagePath = await SaveImageAsync(dto.ImageFile);
+                existingNews.ImageUrl = imagePath;
             }
 
-            await _newsService.UpdateNewsAsync(news);
+            await _newsService.UpdateNewsAsync(existingNews);
             return NoContent();
         }
 
-        // Удаление новости
+        /// <summary>
+        /// Удалить новость.
+        /// </summary>
         [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
@@ -82,7 +130,9 @@ namespace LandingAPI.Controllers
             return NoContent();
         }
 
-        // Метод для сохранения изображения
+        /// <summary>
+        /// Сохранить изображение.
+        /// </summary>
         private async Task<string> SaveImageAsync(IFormFile imageFile)
         {
             string uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads");

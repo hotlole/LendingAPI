@@ -37,6 +37,11 @@ namespace Landing.Infrastructure.Repositories
             await _context.SaveChangesAsync();
             return eventItem;
         }
+        public async Task AddAsync(Event eventEntity)
+        {
+            await _context.Events.AddAsync(eventEntity);
+            await _context.SaveChangesAsync();
+        }
 
         public async Task<bool> DeleteAsync(int id)
         {

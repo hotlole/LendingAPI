@@ -7,7 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Landing.Application.Interfaces;
 using Landing.Application.Services;
-using Landing.Infrastructure.Repositories;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +27,7 @@ builder.Services.AddScoped<UserRepository>();
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]);
 
+
 // Настраиваем аутентификацию через JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -44,6 +45,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
+ConfigureDevelopmentServices(builder.Services);
 
 var app = builder.Build();
 
@@ -60,9 +62,27 @@ app.UseHttpsRedirection();
 app.MapControllers();
 app.UseStaticFiles();
 app.Run();
+static void
+   ConfigureDevelopmentServices(IServiceCollection services)
+{
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlFilePath = Path.Combine(AppContext.BaseDirectory, xmlFile);
 
+    services.AddSwaggerGen(opts =>
+    {
+        opts.CustomSchemaIds(type => type.FullName);
+        opts.IncludeXmlComments(xmlFilePath, true);
+        opts.UseAllOfToExtendReferenceSchemas();
+        opts.UseAllOfForInheritance();
+        opts.UseOneOfForPolymorphism();
+        opts.UseInlineDefinitionsForEnums();
+        opts.SelectDiscriminatorNameUsing(_ => "$type");
+    });
+
+    services.AddEndpointsApiExplorer();
+}
 // Метод для создания админа
-void EnsureAdminCreated(ApplicationDbContext context)
+/*void EnsureAdminCreated(ApplicationDbContext context)
 {
     if (!context.Users.Any(u => u.Email == "admin@example.com"))
     {
@@ -76,3 +96,4 @@ void EnsureAdminCreated(ApplicationDbContext context)
         context.SaveChanges();
     }
 }
+*/

@@ -8,6 +8,7 @@ namespace Landing.Application.Interfaces
         Task<Event?> GetByIdAsync(int id);
         Task<Event> CreateAsync(Event eventItem);
         Task<Event> UpdateAsync(Event eventItem);
+        Task AddAsync(Event eventEntity);
         Task<bool> DeleteAsync(int id);
     }
 }
