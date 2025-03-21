@@ -1,8 +1,11 @@
 ﻿using Landing.Application.Services;
 using Landing.Core.Models;
-using LandingAPI.DTOs;
+using Landing.Application.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using AutoMapper;
+using System.Linq.Expressions;
+using System.Linq.Dynamic.Core;
 
 namespace LandingAPI.Controllers
 {
@@ -15,32 +18,49 @@ namespace LandingAPI.Controllers
     {
         private readonly NewsService _newsService;
         private readonly IWebHostEnvironment _environment;
+        private readonly IMapper _mapper;
 
-        public NewsController(NewsService newsService, IWebHostEnvironment environment)
+        public NewsController(NewsService newsService, IWebHostEnvironment environment, IMapper mapper)
         {
             _newsService = newsService;
             _environment = environment;
+            _mapper = mapper;
         }
 
         /// <summary>
-        /// Получить список всех новостей.
+        /// Получить список всех новостей с поддержкой поиска, сортировки и пагинации.
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery] string? search, [FromQuery] string? sortBy, [FromQuery] string? sortOrder, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
-            var news = await _newsService.GetAllNewsAsync();
+            var newsQuery = (await _newsService.GetAllNewsAsync()).AsQueryable();
 
-            var newsDtos = news.Select(n => new NewsDto
+            if (!string.IsNullOrWhiteSpace(search))
             {
-                Id = n.Id,
-                Title = n.Title,
-                Description = n.Description,
-                ImageUrl = n.ImageUrl,
-                PublishedAt = n.PublishedAt
-            });
+                newsQuery = newsQuery.Where(n => n.Title.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                                                 n.Description.Contains(search, StringComparison.OrdinalIgnoreCase));
+            }
 
-            return Ok(newsDtos);
+            if (!string.IsNullOrWhiteSpace(sortBy))
+            {
+                var sortingOrder = sortOrder?.ToLower() == "desc" ? "descending" : "ascending";
+                try
+                {
+                    newsQuery = newsQuery.OrderBy($"{sortBy} {sortingOrder}");
+                }
+                catch (Exception)
+                {
+                    return BadRequest("Неверное поле для сортировки.");
+                }
+            }
+
+            var totalItems = newsQuery.Count();
+            var news = newsQuery.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+
+            var newsDtos = _mapper.Map<IEnumerable<NewsDto>>(news);
+            return Ok(new { totalItems, page, pageSize, items = newsDtos });
         }
+
 
         /// <summary>
         /// Получить новость по ID.
@@ -52,15 +72,7 @@ namespace LandingAPI.Controllers
             if (newsItem == null)
                 return NotFound();
 
-            var newsDto = new NewsDto
-            {
-                Id = newsItem.Id,
-                Title = newsItem.Title,
-                Description = newsItem.Description,
-                ImageUrl = newsItem.ImageUrl,
-                PublishedAt = newsItem.PublishedAt
-            };
-
+            var newsDto = _mapper.Map<NewsDto>(newsItem);
             return Ok(newsDto);
         }
 
@@ -74,19 +86,9 @@ namespace LandingAPI.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            string? imagePath = null;
-            if (dto.ImageFile != null)
-            {
-                imagePath = await SaveImageAsync(dto.ImageFile);
-            }
-
-            var news = new News
-            {
-                Title = dto.Title,
-                Description = dto.Description,
-                ImageUrl = imagePath,
-                PublishedAt = DateTime.UtcNow
-            };
+            var news = _mapper.Map<News>(dto);
+            news.ImageUrl = dto.ImageFile != null ? await SaveImageAsync(dto.ImageFile) : null;
+            news.PublishedAt = DateTime.UtcNow;
 
             await _newsService.AddNewsAsync(news);
             return CreatedAtAction(nameof(GetById), new { id = news.Id }, news);
@@ -103,16 +105,11 @@ namespace LandingAPI.Controllers
             if (existingNews == null)
                 return NotFound();
 
-            if (!string.IsNullOrWhiteSpace(dto.Title))
-                existingNews.Title = dto.Title;
-
-            if (!string.IsNullOrWhiteSpace(dto.Description))
-                existingNews.Description = dto.Description;
+            _mapper.Map(dto, existingNews);
 
             if (dto.ImageFile != null)
             {
-                string imagePath = await SaveImageAsync(dto.ImageFile);
-                existingNews.ImageUrl = imagePath;
+                existingNews.ImageUrl = await SaveImageAsync(dto.ImageFile);
             }
 
             await _newsService.UpdateNewsAsync(existingNews);

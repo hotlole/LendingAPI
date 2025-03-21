@@ -1,6 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Http;
+using System.ComponentModel.DataAnnotations;
 
-namespace LandingAPI.DTOs
+namespace Landing.Application.DTOs
 {
     
     public class CreateNewsDto
@@ -13,5 +14,7 @@ namespace LandingAPI.DTOs
         [Required(ErrorMessage = "Описание обязательно")]
         public string Description { get; set; }
         public IFormFile? ImageFile { get; set; }
+
+
     }
 }

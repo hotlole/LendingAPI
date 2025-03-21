@@ -1,7 +1,9 @@
 ﻿using Landing.Application.Interfaces;
 using Landing.Core.Models;
+using Landing.Application.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using AutoMapper;
 
 namespace Landing.API.Controllers
 {
@@ -13,80 +15,83 @@ namespace Landing.API.Controllers
     public class EventController : ControllerBase
     {
         private readonly IEventRepository _eventRepository;
-        /// <summary>
-        /// Конструктор контроллера.
-        /// </summary>
-        /// <param name="eventRepository">Репозиторий мероприятий.</param>
-        public EventController(IEventRepository eventRepository)
+        private readonly IMapper _mapper;
+
+        public EventController(IEventRepository eventRepository, IMapper mapper)
         {
             _eventRepository = eventRepository;
+            _mapper = mapper;
         }
+
         /// <summary>
         /// Получить список всех мероприятий.
         /// </summary>
-        /// <returns>Список мероприятий.</returns>
         [HttpGet]
-        [ProducesResponseType(typeof(IEnumerable<Event>), 200)]
+        [ProducesResponseType(typeof(IEnumerable<EventDto>), 200)]
         public async Task<IActionResult> GetAll()
         {
             var events = await _eventRepository.GetAllAsync();
-            return Ok(events);
+            var eventDtos = _mapper.Map<IEnumerable<EventDto>>(events);
+            return Ok(eventDtos);
         }
 
         /// <summary>
         /// Получить мероприятие по ID.
         /// </summary>
-        /// <param name="id">ID мероприятия.</param>
-        /// <returns>Мероприятие с указанным ID.</returns>
         [HttpGet("{id}")]
-        [ProducesResponseType(typeof(Event), 200)]
+        [ProducesResponseType(typeof(EventDto), 200)]
         [ProducesResponseType(404)]
         public async Task<IActionResult> GetById(int id)
         {
             var eventItem = await _eventRepository.GetByIdAsync(id);
             if (eventItem == null) return NotFound("Мероприятие не найдено.");
-            return Ok(eventItem);
+
+            var eventDto = _mapper.Map<EventDto>(eventItem);
+            return Ok(eventDto);
         }
 
         /// <summary>
         /// Создать новое мероприятие (только для Админов).
         /// </summary>
-        /// <param name="eventItem">Данные мероприятия.</param>
-        /// <returns>Созданное мероприятие.</returns>
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        [ProducesResponseType(typeof(Event), 201)]
+        [ProducesResponseType(typeof(EventDto), 201)]
         [ProducesResponseType(400)]
-        public async Task<IActionResult> Create([FromBody] Event eventItem)
+        public async Task<IActionResult> Create([FromBody] CreateEventDto dto)
         {
-            if (eventItem == null) return BadRequest("Некорректные данные.");
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var createdEvent = await _eventRepository.CreateAsync(eventItem);
-            return CreatedAtAction(nameof(GetById), new { id = createdEvent.Id }, createdEvent);
+            var eventItem = _mapper.Map<Event>(dto);
+            await _eventRepository.CreateAsync(eventItem);
+            var eventDto = _mapper.Map<EventDto>(eventItem);
+
+            return CreatedAtAction(nameof(GetById), new { id = eventItem.Id }, eventDto);
         }
-
 
         /// <summary>
         /// Обновить мероприятие (только для Админов).
         /// </summary>
-        /// <param name="id">ID мероприятия.</param>
-        /// <param name="eventItem">Обновленные данные мероприятия.</param>
-        /// <returns>Обновленное мероприятие.</returns>
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
-        [ProducesResponseType(typeof(Event), 200)]
+        [ProducesResponseType(typeof(EventDto), 200)]
         [ProducesResponseType(400)]
-        public async Task<IActionResult> Update(int id, [FromBody] Event eventItem)
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateEventDto dto)
         {
-            if (eventItem == null || id != eventItem.Id) return BadRequest("Некорректные данные.");
+            if (!ModelState.IsValid || id != dto.Id) return BadRequest("Некорректные данные.");
 
-            var updatedEvent = await _eventRepository.UpdateAsync(eventItem);
-            return Ok(updatedEvent);
+            var existingEvent = await _eventRepository.GetByIdAsync(id);
+            if (existingEvent == null) return NotFound("Мероприятие не найдено.");
+
+            _mapper.Map(dto, existingEvent);
+            await _eventRepository.UpdateAsync(existingEvent);
+
+            var eventDto = _mapper.Map<EventDto>(existingEvent);
+            return Ok(eventDto);
         }
+
         /// <summary>
         /// Удалить мероприятие (только для Админов).
         /// </summary>
-        /// <param name="id">ID мероприятия.</param>
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
         [ProducesResponseType(204)]

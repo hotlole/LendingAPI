@@ -1,4 +1,4 @@
-﻿namespace LandingAPI.DTOs
+﻿namespace Landing.Application.DTOs
 {
     
     public class NewsDto
@@ -8,5 +8,8 @@
         public string Description { get; set; }
         public string? ImageUrl { get; set; }
         public DateTime PublishedAt { get; set; }
+
+
     }
+
 }

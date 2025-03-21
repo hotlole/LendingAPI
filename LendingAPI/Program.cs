@@ -8,6 +8,7 @@ using System.Text;
 using Landing.Application.Interfaces;
 using Landing.Application.Services;
 using System.Reflection;
+using AutoMapper;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -45,6 +46,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
+builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
 ConfigureDevelopmentServices(builder.Services);
 
 var app = builder.Build();
