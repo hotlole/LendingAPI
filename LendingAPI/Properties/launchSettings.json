@@ -6,7 +6,8 @@
       "launchUrl": "swagger",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "ConnectionStrings__DefaultConnection": "Host=localhost;Port=5432;Database=LandingDB;Username=postgres;Password=123456",
+        "JwtSettings__SecretKey": "D2661B10E4C767B5D1E120EEF28776781BD72525887599587455DB4523B9C4F3",
+        "ConnectionStrings__DefaultConnection": "Host=localhost;Port=5432;Database=LandingDB;Username=postgres;Password=123456"
 
       },
       "dotnetRunMessages": true,
@@ -18,7 +19,9 @@
       "launchUrl": "swagger",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
+        "JwtSettings__SecretKey": "D2661B10E4C767B5D1E120EEF28776781BD72525887599587455DB4523B9C4F3",
         "ConnectionStrings__DefaultConnection": "Host=localhost;Port=5432;Database=LandingDB;Username=postgres;Password=123456"
+
       },
       "dotnetRunMessages": true,
       "applicationUrl": "https://localhost:7243;http://localhost:5164"

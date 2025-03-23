@@ -95,6 +95,7 @@ namespace LandingAPI.Controllers
         {
             var jwtSettings = _configuration.GetSection("JwtSettings");
             var secretKey = Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]);
+            Console.WriteLine($"Secret key length: {secretKey.Length}");
 
             var claims = new List<Claim>
             {
@@ -112,6 +113,51 @@ namespace LandingAPI.Controllers
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+        /// <summary>
+        /// Смена роли пользователя (только для администраторов).
+        /// </summary>
+        /// <param name="userId">Идентификатор пользователя</param>
+        /// <param name="newRole">Новая роль</param>
+        /// <returns>Результат операции</returns>
+        [HttpPost("change-role")]
+        public async Task<IActionResult> ChangeUserRole([FromQuery] int userId, [FromQuery] string newRole)
+        {
+            // Проверка прав: только администратор может менять роль
+            var currentUser = _context.Users.Include(u => u.UserRoles).ThenInclude(ur => ur.Role)
+                                            .FirstOrDefault(u => u.Email == User.Identity.Name); // Идентификатор текущего пользователя из токена
+            if (currentUser == null || !currentUser.UserRoles.Any(ur => ur.Role.Name == "Admin"))
+            {
+                return Unauthorized("У вас нет прав для изменения роли.");
+            }
+
+            var user = await _context.Users.Include(u => u.UserRoles).ThenInclude(ur => ur.Role)
+                                           .FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null)
+                return NotFound("Пользователь не найден");
+
+            var role = await _context.Roles.FirstOrDefaultAsync(r => r.Name == newRole);
+            if (role == null)
+                return BadRequest("Неверная роль");
+
+            var userRole = user.UserRoles.FirstOrDefault();
+            if (userRole != null)
+            {
+                userRole.RoleId = role.Id;
+            }
+            else
+            {
+                userRole = new UserRole
+                {
+                    UserId = user.Id,
+                    RoleId = role.Id
+                };
+                _context.UserRoles.Add(userRole);
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Ok("Роль пользователя изменена");
         }
     }
     /// <summary>

@@ -9,6 +9,7 @@ using Landing.Application.Interfaces;
 using Landing.Application.Services;
 using System.Reflection;
 using AutoMapper;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,8 +28,6 @@ builder.Services.AddScoped<UserRepository>();
 // Читаем настройки JWT
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]);
-
-
 // Настраиваем аутентификацию через JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -80,14 +79,38 @@ app.UseHttpsRedirection();
 app.MapControllers();
 app.UseStaticFiles();
 app.Run();
-static void
-   ConfigureDevelopmentServices(IServiceCollection services)
+static void ConfigureDevelopmentServices(IServiceCollection services)
 {
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlFilePath = Path.Combine(AppContext.BaseDirectory, xmlFile);
 
     services.AddSwaggerGen(opts =>
     {
+        
+        opts.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+        {
+            In = ParameterLocation.Header,
+            Description = "Please enter your Bearer token",
+            Name = "Authorization",
+            Type = SecuritySchemeType.ApiKey
+        });
+
+        opts.AddSecurityRequirement(new OpenApiSecurityRequirement
+        {
+            {
+                new OpenApiSecurityScheme
+                {
+                    Reference = new OpenApiReference
+                    {
+                        Type = ReferenceType.SecurityScheme,
+                        Id = "Bearer"
+                    }
+                },
+                new List<string>()
+            }
+        });
+
+        
         opts.CustomSchemaIds(type => type.FullName);
         opts.IncludeXmlComments(xmlFilePath, true);
         opts.UseAllOfToExtendReferenceSchemas();
@@ -99,19 +122,5 @@ static void
 
     services.AddEndpointsApiExplorer();
 }
-// Метод для создания админа
-/*void EnsureAdminCreated(ApplicationDbContext context)
-{
-    if (!context.Users.Any(u => u.Email == "admin@example.com"))
-    {
-        var admin = new User
-        {
-            Email = "admin@example.com",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
-            Role = "Admin"
-        };
-        context.Users.Add(admin);
-        context.SaveChanges();
-    }
-}
-*/
+
+
