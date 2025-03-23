@@ -50,6 +50,22 @@ builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
 ConfigureDevelopmentServices(builder.Services);
 
 var app = builder.Build();
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+    if (!context.Roles.Any())
+    {
+        context.Roles.AddRange(new List<Role>
+        {
+            new Role { Name = "Admin" },
+            new Role { Name = "User" },
+            new Role { Name = "Moderator" }
+        });
+
+        context.SaveChanges();
+    }
+}
 
 app.UseAuthentication();
 app.UseAuthorization();
