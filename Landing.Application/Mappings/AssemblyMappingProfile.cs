@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
 using System.Reflection;
 using System.Linq;
+using Landing.Application.DTOs;
+using Landing.Core.Models;
 namespace Landing.Application.Mappings
 {
     public class AssemblyMappingProfile : Profile
@@ -21,6 +23,10 @@ namespace Landing.Application.Mappings
                 methodInfo?.Invoke(instance, new object[] { this });
             }
 
+        }
+        public AssemblyMappingProfile()
+        {
+            CreateMap<CreateEventDto, Event>(); // Добавляем маппинг
         }
 
     }

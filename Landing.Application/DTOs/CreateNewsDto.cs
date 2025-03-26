@@ -15,6 +15,5 @@ namespace Landing.Application.DTOs
         public string Description { get; set; }
         public IFormFile? ImageFile { get; set; }
 
-
     }
 }

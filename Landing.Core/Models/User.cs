@@ -2,8 +2,14 @@
 
 namespace Landing.Core.Models
 {
+    /// <summary>
+    /// Пользователь системы
+    /// </summary>
     public class User
     {
+        /// <summary>
+        /// Уникальный идентификатор пользователя
+        /// </summary>
         [Key]
         public int Id { get; set; }
 

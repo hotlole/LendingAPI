@@ -45,7 +45,6 @@ namespace Landing.API.Controllers
         {
             var eventItem = await _eventRepository.GetByIdAsync(id);
             if (eventItem == null) return NotFound("Мероприятие не найдено.");
-
             var eventDto = _mapper.Map<EventDto>(eventItem);
             return Ok(eventDto);
         }

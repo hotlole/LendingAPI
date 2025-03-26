@@ -8,7 +8,6 @@ using System.Text;
 using Landing.Application.Interfaces;
 using Landing.Application.Services;
 using System.Reflection;
-using AutoMapper;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -51,7 +50,9 @@ ConfigureDevelopmentServices(builder.Services);
 var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
+    
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    await AdminSeeder.SeedAdminAsync(context);
 
     if (!context.Roles.Any())
     {
