@@ -22,7 +22,9 @@ builder.Services.AddScoped<NewsService>();
 builder.Services.AddScoped<EventService>();
 // Настраиваем подключение к PostgreSQL
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+           .EnableSensitiveDataLogging()  // Включает вывод данных в логи
+           .LogTo(Console.WriteLine, LogLevel.Information));  // Логирует запросы к БД
 builder.Services.AddScoped<UserRepository>();
 // Читаем настройки JWT
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
@@ -42,7 +44,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(secretKey)
         };
     });
-
 builder.Services.AddAuthorization();
 builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
 ConfigureDevelopmentServices(builder.Services);

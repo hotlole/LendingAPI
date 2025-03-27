@@ -9,6 +9,7 @@ using Landing.Core.Models;
 using Landing.Infrastructure.Repositories;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
+using Landing.Application.Interfaces;
 
 namespace LandingAPI.Controllers
 {
@@ -22,7 +23,7 @@ namespace LandingAPI.Controllers
         private readonly IConfiguration _configuration;
         private readonly ApplicationDbContext _context;
         private readonly UserRepository _userRepository;
-
+        
 
 
         /// <summary>
@@ -69,21 +70,16 @@ namespace LandingAPI.Controllers
             var newUser = new User
             {
                 Email = request.Email,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password)
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+               
             };
 
             _context.Users.Add(newUser);
             await _context.SaveChangesAsync();
 
-            var userRole = new UserRole
-            {
-                UserId = newUser.Id,
-                RoleId = _context.Roles.FirstOrDefault(r => r.Name == "User")?.Id ?? 1
-            };
-            _context.UserRoles.Add(userRole);
-            await _context.SaveChangesAsync();
-
-            return Ok("Пользователь зарегистрирован");
+            
+           
+            return Ok("Пользователь зарегистрирован. Подтвердите email по ссылке в письме.");
         }
         /// <summary>
         /// Генерация JWT-токена.
