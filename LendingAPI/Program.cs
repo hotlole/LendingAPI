@@ -9,6 +9,7 @@ using Landing.Application.Interfaces;
 using Landing.Application.Services;
 using System.Reflection;
 using Microsoft.OpenApi.Models;
+using Landing.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,6 +47,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddAuthorization();
 builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
+builder.Services.AddScoped<IEmailService, EmailService>();
 ConfigureDevelopmentServices(builder.Services);
 
 var app = builder.Build();
