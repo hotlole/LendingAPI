@@ -5,10 +5,7 @@
       "launchBrowser": true,
       "launchUrl": "swagger",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "JwtSettings__SecretKey": "D2661B10E4C767B5D1E120EEF28776781BD72525887599587455DB4523B9C4F3",
-        "ConnectionStrings__DefaultConnection": "Host=localhost;Port=5432;Database=LandingDB;Username=postgres;Password=123456"
-
+        "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "dotnetRunMessages": true,
       "applicationUrl": "http://localhost:5164"
@@ -18,13 +15,20 @@
       "launchBrowser": true,
       "launchUrl": "swagger",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "JwtSettings__SecretKey": "D2661B10E4C767B5D1E120EEF28776781BD72525887599587455DB4523B9C4F3",
-        "ConnectionStrings__DefaultConnection": "Host=localhost;Port=5432;Database=LandingDB;Username=postgres;Password=123456"
-
+        "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "dotnetRunMessages": true,
       "applicationUrl": "https://localhost:7243;http://localhost:5164"
+    },
+    "Docker": {
+      "commandName": "Docker",
+      "launchBrowser": true,
+      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}/swagger",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "publishAllPorts": true,
+      "useSSL": true
     }
   }
 }
