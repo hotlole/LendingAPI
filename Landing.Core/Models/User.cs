@@ -19,7 +19,8 @@ namespace Landing.Core.Models
 
         public string PasswordHash { get; set; } = string.Empty;
         public ICollection<UserRole> UserRoles { get; set; } = new HashSet<UserRole>();
-      
+
+        public int? EventId { get; set; } // 🔹 Идентификатор мероприятия
         public string? RefreshToken { get; set; } // 🔹 Сам токен
         public DateTime? RefreshTokenExpiryTime { get; set; } // 🔹 Срок действия токена
     }

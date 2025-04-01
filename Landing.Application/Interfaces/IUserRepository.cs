@@ -4,7 +4,7 @@ namespace Landing.Application.Interfaces
 {
     public interface IUserRepository
     {
-        Task<User?> GetByIdAsync(string userId);
+        Task<User?> GetByIdAsync(int userId);
         Task UpdateAsync(User user);
     }
 }

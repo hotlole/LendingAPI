@@ -19,7 +19,7 @@ public class EventService
     public async Task UpdateAsync(Event eventItem) => await _eventRepository.UpdateAsync(eventItem);
     public async Task DeleteAsync(int id) => await _eventRepository.DeleteAsync(id);
 
-    public async Task<bool> RegisterForEventAsync(int eventId, string userId)
+    public async Task<bool> RegisterForEventAsync(int eventId, int userId)
     {
         var user = await _userRepository.GetByIdAsync(userId);
         if (user == null || !user.IsEmailConfirmed)

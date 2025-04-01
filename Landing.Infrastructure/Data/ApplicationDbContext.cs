@@ -8,8 +8,9 @@ namespace Landing.Infrastructure.Data
     {
         public ApplicationDbContext()
         {
-            /*Database.EnsureCreated();*/
             Database.EnsureDeleted();
+            Database.EnsureCreated();
+
         }
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)

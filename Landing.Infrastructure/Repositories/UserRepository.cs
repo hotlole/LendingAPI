@@ -19,10 +19,11 @@ namespace Landing.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<User?> GetByIdAsync(string userId)
+        public async Task<User?> GetByIdAsync(int userId)
         {
             return await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
         }
+
 
         public async Task UpdateAsync(User user)
         {
