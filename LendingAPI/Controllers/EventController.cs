@@ -4,6 +4,7 @@ using Landing.Application.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using AutoMapper;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace Landing.API.Controllers
 {
@@ -16,11 +17,13 @@ namespace Landing.API.Controllers
     {
         private readonly IEventRepository _eventRepository;
         private readonly IMapper _mapper;
+        private readonly EventService _eventService;
 
-        public EventController(IEventRepository eventRepository, IMapper mapper)
+        public EventController(IEventRepository eventRepository, IMapper mapper, EventService eventService)
         {
             _eventRepository = eventRepository;
             _mapper = mapper;
+            _eventService = eventService;
         }
 
         /// <summary>
@@ -102,5 +105,72 @@ namespace Landing.API.Controllers
 
             return NoContent();
         }
+
+        /// <summary>
+        /// Подтвердить явку пользователя на мероприятие и начислить баллы (только для Админов и Модераторов).
+        /// </summary>
+        /// <param name="eventId">Идентификатор мероприятия.</param>
+        /// <param name="userId">Идентификатор пользователя.</param>
+        /// <param name="points">Количество баллов для начисления.</param>
+        /// <returns>Статус подтверждения явки.</returns>
+        [Authorize(Roles = "Admin,Moderator")]
+        [HttpPost("{eventId}/confirm/{userId}")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
+        [SwaggerOperation(Summary = "Подтвердить явку пользователя на мероприятие")]
+        public async Task<IActionResult> ConfirmAttendance(int eventId, int userId, [FromBody] int points)
+        {
+            try
+            {
+                await _eventService.ConfirmAttendanceAsync(userId, eventId, points);
+                return Ok("Явка подтверждена");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        /// <summary>
+        /// Обновить HTML-шаблон мероприятия.
+        /// </summary>
+        /// <param name="eventId">Идентификатор мероприятия.</param>
+        /// <param name="htmlTemplate">Новый HTML-шаблон.</param>
+        /// <returns>Статус обновления шаблона.</returns>
+        [HttpPost("{eventId}/template")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
+        [SwaggerOperation(Summary = "Обновить HTML-шаблон мероприятия")]
+        public async Task<IActionResult> UpdateHtmlTemplate(int eventId, [FromBody] string htmlTemplate)
+        {
+            try
+            {
+                await _eventService.UpdateHtmlTemplateAsync(eventId, htmlTemplate);
+                return Ok("Шаблон успешно обновлён.");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Получить HTML-шаблон мероприятия.
+        /// </summary>
+        /// <param name="eventId">Идентификатор мероприятия.</param>
+        /// <returns>HTML-шаблон мероприятия.</returns>
+        [HttpGet("{eventId}/template")]
+        [ProducesResponseType(typeof(string), 200)]
+        [ProducesResponseType(404)]
+        [SwaggerOperation(Summary = "Получить HTML-шаблон мероприятия")]
+        public async Task<IActionResult> GetHtmlTemplate(int eventId)
+        {
+            var template = await _eventService.GetHtmlTemplateAsync(eventId);
+            if (template == null)
+                return NotFound("Шаблон не найден.");
+
+            return Ok(template);
+        }
+
+
     }
 }

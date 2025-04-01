@@ -24,7 +24,8 @@ namespace Landing.Infrastructure.Data
         public DbSet<Event> Events { get; set; }
         public DbSet<Role> Roles { get; set; }
         public DbSet<UserRole> UserRoles { get; set; }
-        
+        public DbSet<EventAttendance> EventAttendances { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -42,6 +43,22 @@ namespace Landing.Infrastructure.Data
                 .HasOne(ur => ur.Role)
                 .WithMany(r => r.UserRoles)
                 .HasForeignKey(ur => ur.RoleId);
+            modelBuilder.Entity<EventAttendance>().HasOne(ea => ea.User)
+                .WithMany(u => u.Attendances)
+                .HasForeignKey(ea => ea.UserId);
+
+            modelBuilder.Entity<EventAttendance>()
+                .HasOne(ea => ea.Event)
+                .WithMany(e => e.Attendances)
+                .HasForeignKey(ea => ea.EventId);
+            modelBuilder.Entity<Event>()
+                .Property(e => e.Latitude)
+                .HasPrecision(9, 6);
+            modelBuilder.Entity<Event>()
+                .Property(e => e.Longitude)
+                .HasPrecision(9, 6);
+
+
         }
     }
 }
