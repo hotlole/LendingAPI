@@ -1,4 +1,5 @@
 ﻿﻿using Landing.Core.Models;
+using Landing.Infrastructure.Data.Configurations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
@@ -8,8 +9,8 @@ namespace Landing.Infrastructure.Data
     {
         public ApplicationDbContext()
         {
-            Database.EnsureDeleted();
-            Database.EnsureCreated();
+            /*Database.EnsureDeleted();
+            Database.EnsureCreated();*/
 
         }
 
@@ -26,39 +27,12 @@ namespace Landing.Infrastructure.Data
         public DbSet<UserRole> UserRoles { get; set; }
         public DbSet<EventAttendance> EventAttendances { get; set; }
 
-
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
-            modelBuilder.Entity<UserRole>()
-                .HasKey(ur => new { ur.UserId, ur.RoleId });
-
-            modelBuilder.Entity<UserRole>()
-                .HasOne(ur => ur.User)
-                .WithMany(u => u.UserRoles)
-                .HasForeignKey(ur => ur.UserId);
-
-            modelBuilder.Entity<UserRole>()
-                .HasOne(ur => ur.Role)
-                .WithMany(r => r.UserRoles)
-                .HasForeignKey(ur => ur.RoleId);
-            modelBuilder.Entity<EventAttendance>().HasOne(ea => ea.User)
-                .WithMany(u => u.Attendances)
-                .HasForeignKey(ea => ea.UserId);
-
-            modelBuilder.Entity<EventAttendance>()
-                .HasOne(ea => ea.Event)
-                .WithMany(e => e.Attendances)
-                .HasForeignKey(ea => ea.EventId);
-            modelBuilder.Entity<Event>()
-                .Property(e => e.Latitude)
-                .HasPrecision(9, 6);
-            modelBuilder.Entity<Event>()
-                .Property(e => e.Longitude)
-                .HasPrecision(9, 6);
-
-
+            modelBuilder.ApplyConfiguration(new EventConfiguration());
+            modelBuilder.ApplyConfiguration(new EventAttendanceConfiguration());
+            modelBuilder.ApplyConfiguration(new UserRoleConfiguration());
         }
     }
 }
