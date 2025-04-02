@@ -10,6 +10,7 @@ using Landing.Application.Services;
 using System.Reflection;
 using Microsoft.OpenApi.Models;
 using Landing.Infrastructure.Services;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,12 +22,21 @@ builder.Services.AddScoped<INewsRepository, NewsRepository>();
 builder.Services.AddScoped<IEventRepository, EventRepository>();
 builder.Services.AddScoped<NewsService>();
 builder.Services.AddScoped<EventService>();
+builder.Services.AddScoped<BackgroundTasksService>();
 // Настраиваем подключение к PostgreSQL
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
            .EnableSensitiveDataLogging()  // Включает вывод данных в логи
            .LogTo(Console.WriteLine, LogLevel.Information));  // Логирует запросы к БД
 builder.Services.AddScoped<UserRepository>();
+
+// Настройка Serilog
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .CreateLogger();
+
+builder.Host.UseSerilog();
+
 // Читаем настройки JWT
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]);
@@ -56,7 +66,7 @@ using (var scope = app.Services.CreateScope())
 {
     
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    await AdminSeeder.SeedAdminAsync(context);
+    /*await AdminSeeder.SeedAdminAsync(context);*/
 
     if (!context.Roles.Any())
     {
@@ -91,6 +101,7 @@ static void ConfigureDevelopmentServices(IServiceCollection services)
 
     services.AddSwaggerGen(opts =>
     {
+
         
         opts.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
         {

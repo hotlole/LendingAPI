@@ -59,6 +59,7 @@ namespace Landing.API.Controllers
         [Authorize(Roles = "Admin")]
         [ProducesResponseType(typeof(EventDto), 201)]
         [ProducesResponseType(400)]
+
         public async Task<IActionResult> Create([FromBody] CreateEventDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);

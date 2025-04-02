@@ -1,4 +1,4 @@
-﻿using System;
+﻿/*using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -10,7 +10,7 @@ public class AdminSeeder
     public static async Task SeedAdminAsync(ApplicationDbContext context)
     {
         string adminEmail = "admin@example.com";
-        string adminPassword = "Admin123!"; // Можно захешировать перед сохранением
+        string adminPassword = "Admin123!"; 
 
         
         var adminRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "Admin");
@@ -48,3 +48,4 @@ public class AdminSeeder
         Console.WriteLine("✅ Админ создан и добавлен в роль 'Admin'.");
     }
 }
+*/
