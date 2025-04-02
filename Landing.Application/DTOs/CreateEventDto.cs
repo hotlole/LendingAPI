@@ -1,9 +1,9 @@
-﻿using Landing.Core.Models;
-using Landing.Application.Mappings;
+﻿using Landing.Application.Mappings;
 using AutoMapper;
 using System;
 using System.ComponentModel.DataAnnotations;
 using Swashbuckle.AspNetCore.Annotations;
+using Landing.Core.Models.Events;
 
 namespace Landing.Application.DTOs
 {

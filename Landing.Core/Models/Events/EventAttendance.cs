@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Swashbuckle.AspNetCore.Annotations;
 
-namespace Landing.Core.Models
+namespace Landing.Core.Models.Events
 {
     /// <summary>
     /// Явка на мероприятие

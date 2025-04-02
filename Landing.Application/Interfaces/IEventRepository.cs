@@ -1,4 +1,4 @@
-﻿using Landing.Core.Models;
+﻿using Landing.Core.Models.Events;
 
 namespace Landing.Application.Interfaces
 {

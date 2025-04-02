@@ -1,4 +1,4 @@
-﻿using Landing.Core.Models;
+﻿using Landing.Core.Models.Events;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

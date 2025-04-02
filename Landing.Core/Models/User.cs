@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Landing.Core.Models.Events;
 
 namespace Landing.Core.Models
 {

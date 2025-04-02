@@ -2,7 +2,7 @@
 using System.Reflection;
 using System.Linq;
 using Landing.Application.DTOs;
-using Landing.Core.Models;
+using Landing.Core.Models.Events;
 namespace Landing.Application.Mappings
 {
     public class AssemblyMappingProfile : Profile

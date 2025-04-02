@@ -1,8 +1,8 @@
-﻿using Landing.Core.Models;
-using Landing.Application.Mappings;
+﻿using Landing.Application.Mappings;
 using AutoMapper;
 using System;
 using Swashbuckle.AspNetCore.Annotations;
+using Landing.Core.Models.Events;
 
 namespace Landing.Application.DTOs
 {
@@ -36,6 +36,12 @@ namespace Landing.Application.DTOs
         public DateTime Date { get; set; }
 
         /// <summary>
+        /// Тип мероприятия.
+        /// </summary>
+        [SwaggerSchema("Тип мероприятия.")]
+        public EventType Type { get; set; }
+
+        /// <summary>
         /// Широта местоположения мероприятия.
         /// </summary>
         [SwaggerSchema("Широта местоположения мероприятия.")]
@@ -52,6 +58,12 @@ namespace Landing.Application.DTOs
         /// </summary>
         [SwaggerSchema("Адрес проведения мероприятия.")]
         public string? Address { get; set; }
+
+        /// <summary>
+        /// Пользовательский HTML-шаблон мероприятия.
+        /// </summary>
+        [SwaggerSchema("Пользовательский HTML-шаблон мероприятия.")]
+        public string? CustomHtmlTemplate { get; set; }
 
         public void Mapping(Profile profile)
         {
