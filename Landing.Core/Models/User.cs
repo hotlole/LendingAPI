@@ -17,7 +17,6 @@ namespace Landing.Core.Models
         [Required, EmailAddress, MaxLength(255)]
         public string Email { get; set; } = string.Empty;
         public bool IsEmailConfirmed { get; set; } = false;
-
         public string PasswordHash { get; set; } = string.Empty;
         public ICollection<UserRole> UserRoles { get; set; } = new HashSet<UserRole>();
         public ICollection<EventAttendance> Attendances { get; set; } = new HashSet<EventAttendance>();
