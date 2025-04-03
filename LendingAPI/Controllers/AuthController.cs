@@ -5,11 +5,14 @@ using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Configuration;
 using Landing.Infrastructure.Data;
+using Landing.Infrastructure.Services;
 using Landing.Core.Models;
 using Landing.Infrastructure.Repositories;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using Landing.Application.Interfaces;
+using Microsoft.AspNetCore.Identity.Data;
+using System.Security.Cryptography;
 
 namespace LandingAPI.Controllers
 {
@@ -44,7 +47,7 @@ namespace LandingAPI.Controllers
         /// <param name="request">Данные для входа</param>
         /// <returns>JWT-токен, если авторизация успешна</returns>
         [HttpPost("login")]
-        public IActionResult Login([FromBody] LoginRequest request)
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             var user = _context.Users.Include(u => u.UserRoles).ThenInclude(ur => ur.Role)
                                       .FirstOrDefault(u => u.Email == request.Email);
@@ -53,7 +56,34 @@ namespace LandingAPI.Controllers
 
             var role = user.UserRoles.FirstOrDefault()?.Role?.Name ?? "User";
             var token = GenerateJwtToken(user, role);
-            return Ok(new { Token = token });
+            var refreshToken = GenerateRefreshToken(user.Id);
+
+            _context.RefreshTokens.Add(refreshToken);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { Token = token, RefreshToken = refreshToken.Token });
+        }
+        [HttpPost("refresh")]
+        public async Task<IActionResult> Refresh([FromBody] RefreshRequest request)
+        {
+            var storedToken = await _context.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == request.RefreshToken);
+
+            if (storedToken == null || !storedToken.IsActive)
+                return Unauthorized("Недействительный или просроченный рефреш-токен.");
+
+            var user = await _context.Users.FindAsync(storedToken.UserId);
+            if (user == null)
+                return Unauthorized("Пользователь не найден.");
+
+            var role = user.UserRoles.FirstOrDefault()?.Role?.Name ?? "User";
+            var newJwt = GenerateJwtToken(user, role);
+            var newRefreshToken = GenerateRefreshToken(user.Id);
+
+            storedToken.Revoked = DateTime.UtcNow;
+            _context.RefreshTokens.Add(newRefreshToken);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { Token = newJwt, RefreshToken = newRefreshToken.Token });
         }
         /// <summary>
         /// Регистрация нового пользователя.
@@ -155,6 +185,16 @@ namespace LandingAPI.Controllers
 
             return Ok("Роль пользователя изменена");
         }
+        private RefreshToken GenerateRefreshToken(int userId)
+        {
+            return new RefreshToken
+            {
+                UserId = userId,
+                Token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64)),
+                Expires = DateTime.UtcNow.AddDays(7),
+                Created = DateTime.UtcNow
+            };
+        }
     }
     /// <summary>
     /// Запрос на авторизацию.
@@ -176,5 +216,10 @@ namespace LandingAPI.Controllers
         [Required(ErrorMessage = "Пароль обязателен")]
         [MinLength(6, ErrorMessage = "Пароль должен содержать минимум 6 символов")]
         public string Password { get; set; }
+    }
+    public class RefreshRequest
+    {
+        [Required]
+        public string RefreshToken { get; set; } = string.Empty;
     }
 }

@@ -14,7 +14,8 @@ namespace Landing.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<IEnumerable<News>> GetAllAsync() => await _context.News.ToListAsync();
+        public IQueryable<News> GetAll() => _context.News.AsQueryable();
+
 
         public async Task<News?> GetByIdAsync(int id) => await _context.News.FindAsync(id);
 

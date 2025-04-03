@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using AutoMapper;
 using System.Linq.Expressions;
 using System.Linq.Dynamic.Core;
+using Microsoft.EntityFrameworkCore;
 
 namespace LandingAPI.Controllers
 {
@@ -26,19 +27,17 @@ namespace LandingAPI.Controllers
             _environment = environment;
             _mapper = mapper;
         }
-
         /// <summary>
         /// Получить список всех новостей с поддержкой поиска, сортировки и пагинации.
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] string? search, [FromQuery] string? sortBy, [FromQuery] string? sortOrder, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
-            var newsQuery = (await _newsService.GetAllNewsAsync()).AsQueryable();
+            var newsQuery = _newsService.GetAllNewsAsQueryable();
 
             if (!string.IsNullOrWhiteSpace(search))
             {
-                newsQuery = newsQuery.Where(n => n.Title.Contains(search, StringComparison.OrdinalIgnoreCase) ||
-                                                 n.Description.Contains(search, StringComparison.OrdinalIgnoreCase));
+                newsQuery = newsQuery.Where(n => n.Title.Contains(search) || n.Description.Contains(search));
             }
 
             if (!string.IsNullOrWhiteSpace(sortBy))
@@ -54,8 +53,8 @@ namespace LandingAPI.Controllers
                 }
             }
 
-            var totalItems = newsQuery.Count();
-            var news = newsQuery.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+            var totalItems = await newsQuery.CountAsync();
+            var news = await newsQuery.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
 
             var newsDtos = _mapper.Map<IEnumerable<NewsDto>>(news);
             return Ok(new { totalItems, page, pageSize, items = newsDtos });

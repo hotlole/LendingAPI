@@ -53,21 +53,33 @@ namespace Landing.Application.Services
 
         public async Task<User?> GetUserByRefreshToken(string refreshToken)
         {
-            return await _context.Users.FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
+            return await _context.Users
+                .Include(u => u.RefreshTokens)
+                .FirstOrDefaultAsync(u => u.RefreshTokens.Any(rt => rt.Token == refreshToken));
         }
+
 
         public async Task SaveRefreshToken(User user, string refreshToken)
         {
-            user.RefreshToken = refreshToken;
-            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+            user.RefreshTokens.Add(new RefreshToken
+            {
+                Token = refreshToken,
+                Expires = DateTime.UtcNow.AddDays(7)
+            });
+
             await _context.SaveChangesAsync();
         }
 
-        public async Task RevokeRefreshToken(User user)
+
+        public async Task RevokeRefreshToken(User user, string refreshToken)
         {
-            user.RefreshToken = null;
-            user.RefreshTokenExpiryTime = null;
-            await _context.SaveChangesAsync();
+            var token = user.RefreshTokens.FirstOrDefault(rt => rt.Token == refreshToken);
+            if (token != null)
+            {
+                user.RefreshTokens.Remove(token);
+                await _context.SaveChangesAsync();
+            }
         }
+
     }
 }

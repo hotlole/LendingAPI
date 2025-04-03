@@ -12,9 +12,9 @@ namespace Landing.Application.Services
             _newsRepository = newsRepository;
         }
 
-        public async Task<IEnumerable<News>> GetAllNewsAsync()
+        public IQueryable<News> GetAllNewsAsQueryable()
         {
-            return await _newsRepository.GetAllAsync();
+            return _newsRepository.GetAll().AsQueryable();
         }
 
         public async Task<News?> GetNewsByIdAsync(int id)

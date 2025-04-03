@@ -8,6 +8,7 @@ namespace Landing.Application.Interfaces
         string GenerateRefreshToken();
         Task<User?> GetUserByRefreshToken(string refreshToken);
         Task SaveRefreshToken(User user, string refreshToken);
-        Task RevokeRefreshToken(User user);
+        Task RevokeRefreshToken(User user, string refreshToken);
+
     }
 }

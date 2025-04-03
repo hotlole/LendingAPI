@@ -22,6 +22,7 @@ namespace Landing.Infrastructure.Data
         }
 
         public DbSet<User> Users { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
         public DbSet<News> News { get; set; }
         public DbSet<Event> Events { get; set; }
         public DbSet<Role> Roles { get; set; }
