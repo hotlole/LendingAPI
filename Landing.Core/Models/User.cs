@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using Landing.Core.Models.Events;
 
 namespace Landing.Core.Models
@@ -21,5 +22,9 @@ namespace Landing.Core.Models
         public ICollection<UserRole> UserRoles { get; set; } = new HashSet<UserRole>();
         public ICollection<EventAttendance> Attendances { get; set; } = new HashSet<EventAttendance>();
         public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+        public ICollection<UserPointsTransaction> PointsTransactions { get; set; } = new List<UserPointsTransaction>();
+
+        [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
+        public int Points { get; set; }
     }
 }

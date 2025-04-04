@@ -28,6 +28,7 @@ namespace Landing.Infrastructure.Data
         public DbSet<Role> Roles { get; set; }
         public DbSet<UserRole> UserRoles { get; set; }
         public DbSet<EventAttendance> EventAttendances { get; set; }
+        public DbSet<UserPointsTransaction> UserPointsTransactions { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
