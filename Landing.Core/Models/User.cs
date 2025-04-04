@@ -26,5 +26,11 @@ namespace Landing.Core.Models
 
         [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
         public int Points { get; set; }
+
+        /// <summary>
+        /// Дата рождения пользователя
+        /// </summary>
+        public DateTime? BirthDate { get; set; }
+
     }
 }

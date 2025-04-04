@@ -11,6 +11,8 @@ using System.Reflection;
 using Microsoft.OpenApi.Models;
 using Landing.Infrastructure.Services;
 using Serilog;
+using Hangfire;
+using Hangfire.PostgreSql;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -55,6 +57,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(secretKey)
         };
     });
+
+// Добавляем Hangfire в контейнер сервисов
+builder.Services.AddHangfire(config =>
+    config.UsePostgreSqlStorage(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddHangfireServer();
+builder.Services.AddSingleton<BackgroundTasksService>();
+builder.Services.AddHostedService<BackgroundTasksService>();
+
+
 builder.Services.AddAuthorization();
 builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
 builder.Services.AddScoped<IEmailService, EmailService>();
@@ -97,6 +108,19 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.MapControllers();
 app.UseStaticFiles();
+// Настраиваем Hangfire Dashboard
+app.UseHangfireDashboard("/hangfire");
+app.MapGet("/", () => "Hello World!");
+// Настраиваем задачи Hangfire
+RecurringJob.AddOrUpdate<BackgroundTasksService>(
+    "delete-old-files",
+    x => x.DeleteOldFilesAsync(),
+    Cron.HourInterval(6)); // Каждые 6 часов
+
+RecurringJob.AddOrUpdate<BackgroundTasksService>(
+    "award-birthday-points",
+    x => x.AwardBirthdayPointsAsync(),
+    Cron.Daily); // Ежедневно
 app.Run();
 static void ConfigureDevelopmentServices(IServiceCollection services)
 {

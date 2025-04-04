@@ -101,16 +101,15 @@ namespace LandingAPI.Controllers
             {
                 Email = request.Email,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-               
+                BirthDate = request.BirthDate, 
             };
 
             _context.Users.Add(newUser);
             await _context.SaveChangesAsync();
 
-            
-           
             return Ok("Пользователь зарегистрирован. Подтвердите email по ссылке в письме.");
         }
+
         /// <summary>
         /// Генерация JWT-токена.
         /// </summary>
@@ -216,6 +215,11 @@ namespace LandingAPI.Controllers
         [Required(ErrorMessage = "Пароль обязателен")]
         [MinLength(6, ErrorMessage = "Пароль должен содержать минимум 6 символов")]
         public string Password { get; set; }
+
+        [Required(ErrorMessage = "Дата рождения обязательна")]
+        [DataType(DataType.Date)]
+        [Range(typeof(DateTime), "1900-01-01", "2100-01-01", ErrorMessage = "Некорректная дата рождения")]
+        public DateTime BirthDate { get; set; }
     }
     public class RefreshRequest
     {
