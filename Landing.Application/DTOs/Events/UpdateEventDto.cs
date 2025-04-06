@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations;
 using Swashbuckle.AspNetCore.Annotations;
 using Landing.Core.Models.Events;
 
-namespace Landing.Application.DTOs
+namespace Landing.Application.DTOs.Events
 {
     /// <summary>
     /// Модель для обновления мероприятия.

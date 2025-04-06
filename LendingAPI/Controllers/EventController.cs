@@ -1,10 +1,10 @@
 ﻿using Landing.Application.Interfaces;
-using Landing.Application.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using AutoMapper;
 using Swashbuckle.AspNetCore.Annotations;
 using Landing.Core.Models.Events;
+using Landing.Application.DTOs.Events;
 
 namespace Landing.API.Controllers
 {
@@ -64,8 +64,7 @@ namespace Landing.API.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var eventItem = _mapper.Map<Event>(dto);
-            await _eventRepository.CreateAsync(eventItem);
+            var eventItem = await _eventService.CreateAsync(dto);
             var eventDto = _mapper.Map<EventDto>(eventItem);
 
             return CreatedAtAction(nameof(GetById), new { id = eventItem.Id }, eventDto);

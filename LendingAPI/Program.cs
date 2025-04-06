@@ -30,6 +30,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
            .EnableSensitiveDataLogging()  // Включает вывод данных в логи
            .LogTo(Console.WriteLine, LogLevel.Information));  // Логирует запросы к БД
+ 
+
 builder.Services.AddScoped<UserRepository>();
 
 // Настройка Serilog
@@ -72,6 +74,7 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IUserTransactionService, UserTransactionService>();
+
 
 
 ConfigureDevelopmentServices(builder.Services);

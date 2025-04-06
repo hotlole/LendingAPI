@@ -63,6 +63,13 @@ namespace LandingAPI.Controllers
 
             return Ok(new { Token = token, RefreshToken = refreshToken.Token });
         }
+        /// <summary>
+        /// Обновление JWT токена с использованием Refresh токена.
+        /// </summary>
+        /// <param name="request">Запрос с Refresh токеном</param>
+        /// <returns>Новый JWT-токен и новый Refresh-токен</returns>
+        /// <response code="200">Возвращает новый JWT-токен и Refresh-токен</response>
+        /// <response code="401">Неверный или просроченный Refresh токен</response>
         [HttpPost("refresh")]
         public async Task<IActionResult> Refresh([FromBody] RefreshRequest request)
         {
@@ -184,6 +191,11 @@ namespace LandingAPI.Controllers
 
             return Ok("Роль пользователя изменена");
         }
+        /// <summary>
+        /// Генерация Refresh-токена для пользователя.
+        /// </summary>
+        /// <param name="userId">Идентификатор пользователя</param>
+        /// <returns>Объект Refresh-токена</returns>
         private RefreshToken GenerateRefreshToken(int userId)
         {
             return new RefreshToken
@@ -221,6 +233,9 @@ namespace LandingAPI.Controllers
         [Range(typeof(DateTime), "1900-01-01", "2100-01-01", ErrorMessage = "Некорректная дата рождения")]
         public DateTime BirthDate { get; set; }
     }
+    /// <summary>
+    /// Запрос на обновление Refresh-токена.
+    /// </summary>
     public class RefreshRequest
     {
         [Required]

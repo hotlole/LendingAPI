@@ -5,17 +5,16 @@ using System.Reflection.Emit;
 
 namespace Landing.Infrastructure.Data.Configurations
 {
-    public class EventConfiguration : IEntityTypeConfiguration<OfflineEvent>
+    public class EventConfiguration : IEntityTypeConfiguration<Event>
     {
-        public void Configure(EntityTypeBuilder<OfflineEvent> builder)
+        public void Configure(EntityTypeBuilder<Event> builder)
         {
             builder
-                .Property(e => e.Latitude)
-                .HasPrecision(9, 6);
-           builder
-                .Property(e => e.Longitude)
-                .HasPrecision(9, 6);
-
+               .HasDiscriminator<EventType>("Type")
+               .HasValue<Event>(EventType.Base)
+               .HasValue<RegularEvent>(EventType.Regular)
+               .HasValue<CuratedEvent>(EventType.Curated)
+               .HasValue<OfflineEvent>(EventType.Offline);
         }
     }
 }

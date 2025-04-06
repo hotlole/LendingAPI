@@ -4,7 +4,7 @@ using System;
 using Swashbuckle.AspNetCore.Annotations;
 using Landing.Core.Models.Events;
 
-namespace Landing.Application.DTOs
+namespace Landing.Application.DTOs.Events
 {
     /// <summary>
     /// DTO для мероприятия.

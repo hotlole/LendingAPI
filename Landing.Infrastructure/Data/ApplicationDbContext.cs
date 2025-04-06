@@ -33,20 +33,16 @@ namespace Landing.Infrastructure.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            modelBuilder.Entity<Event>()
-                .HasDiscriminator<string>("Discriminator")
-                .HasValue<RegularEvent>("Regular")
-                .HasValue<CuratedEvent>("Curated")
-                .HasValue<OfflineEvent>("Offline");
 
-            modelBuilder.Entity<CuratedEvent>()
-                .HasMany(e => e.Curators)
-                .WithMany()
-                .UsingEntity(j => j.ToTable("EventCurators"));
 
             modelBuilder.ApplyConfiguration(new EventConfiguration());
+            modelBuilder.ApplyConfiguration(new OfflineEventConfiguration());
             modelBuilder.ApplyConfiguration(new EventAttendanceConfiguration());
             modelBuilder.ApplyConfiguration(new UserRoleConfiguration());
+            modelBuilder.ApplyConfiguration(new UserConfiguration());
+            modelBuilder.ApplyConfiguration(new CuratedEventConfiguration());
+            modelBuilder.ApplyConfiguration(new RegularEventConfiguration());
         }
+
     }
 }

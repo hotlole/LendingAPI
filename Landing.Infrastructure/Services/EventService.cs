@@ -1,4 +1,4 @@
-﻿using Landing.Application.DTOs;
+﻿using Landing.Application.DTOs.Events;
 using Landing.Application.Interfaces;
 using Landing.Core.Models;
 using Landing.Core.Models.Events;
@@ -72,6 +72,54 @@ public class EventService
     public async Task UpdateAsync(Event eventItem) => await _eventRepository.UpdateAsync(eventItem);
 
     public async Task DeleteAsync(int id) => await _eventRepository.DeleteAsync(id);
+    public async Task<Event> CreateAsync(CreateEventDto dto)
+    {
+        Event eventItem;
+        switch (dto.Type)
+        {
+            case EventType.Regular:
+                eventItem = new Event
+                {
+                    Title = dto.Title,
+                    Description = dto.Description,
+                    Date = dto.Date
+                };
+                break;
+            case EventType.Curated:
+                var curatorUsers = dto.CuratorIds != null
+                    ? await _context.Users.Where(u => dto.CuratorIds.Contains(u.Id)).ToListAsync()
+                    : new List<User>();
+
+                eventItem = new CuratedEvent
+                {
+                    Title = dto.Title,
+                    Description = dto.Description,
+                    Date = dto.Date,
+                    Curators = curatorUsers
+                };
+                break;
+
+            case EventType.Offline:
+                if (!IsValidCoordinate(dto.Latitude) || !IsValidCoordinate(dto.Longitude))
+                    throw new ArgumentException("Координаты должны быть в диапазоне от -90 до 90.");
+                eventItem = new OfflineEvent
+                {
+                    Title = dto.Title,
+                    Description = dto.Description,
+                    Date = dto.Date,
+                    Latitude = dto.Latitude ?? 0,
+                    Longitude = dto.Longitude ?? 0,
+                    Address = dto.Address,
+                    CustomHtmlTemplate = dto.CustomHtmlTemplate ?? string.Empty
+                };
+                break;
+            default:
+                throw new ArgumentException("Некорректный тип мероприятия.");
+        }
+
+        await _eventRepository.AddAsync(eventItem);
+        return eventItem;
+    }
 
     public async Task<bool> RegisterForEventAsync(int eventId, int userId)
     {
@@ -79,18 +127,29 @@ public class EventService
         if (user == null || !user.IsEmailConfirmed)
             throw new InvalidOperationException("Пользователь не найден или почта не подтверждена.");
 
-        var eventItem = await _eventRepository.GetByIdAsync(eventId) as RegularEvent;
+        var eventItem = await _eventRepository.GetByIdAsync(eventId);
         if (eventItem == null)
-            throw new InvalidOperationException("Мероприятие не найдено или не является обычным.");
+            throw new InvalidOperationException("Мероприятие не найдено.");
 
-        if (!eventItem.Participants.Any(p => p.Id == user.Id))
+        var alreadyRegistered = await _context.EventAttendances
+            .AnyAsync(ea => ea.UserId == userId && ea.EventId == eventId);
+
+        if (alreadyRegistered)
+            return false;
+
+        var attendance = new EventAttendance
         {
-            eventItem.Participants.Add(user);
-            await _eventRepository.UpdateAsync(eventItem);
-            return true;
-        }
+            EventId = eventId,
+            UserId = userId,
+            ConfirmedAt = DateTime.UtcNow,
+            IsConfirmed = false,
+            PointsAwarded = 0
+        };
 
-        return false;
+        _context.EventAttendances.Add(attendance);
+        await _context.SaveChangesAsync();
+
+        return true;
     }
 
     public async Task ConfirmAttendanceAsync(int userId, int eventId, int points)

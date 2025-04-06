@@ -1,8 +1,8 @@
 ﻿using AutoMapper;
 using System.Reflection;
 using System.Linq;
-using Landing.Application.DTOs;
 using Landing.Core.Models.Events;
+using Landing.Application.DTOs.Events;
 namespace Landing.Application.Mappings
 {
     public class AssemblyMappingProfile : Profile

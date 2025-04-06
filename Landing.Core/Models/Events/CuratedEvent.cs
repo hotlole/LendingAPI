@@ -2,7 +2,8 @@
 {
     public class CuratedEvent : Event
     {
-        public ICollection<User> Curators { get; set; } = new List<User>();
+        public  ICollection<User> Curators { get; set; } = new List<User>();
+
     }
 }
 
