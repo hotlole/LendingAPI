@@ -3,17 +3,20 @@ using System;
 using Landing.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace Landing.Infrastructure.Migrations
+namespace Landing.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250404200041_AddBirthDateToUser")]
+    partial class AddBirthDateToUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,6 +24,21 @@ namespace Landing.Infrastructure.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("CuratedEventUser", b =>
+                {
+                    b.Property<int>("CuratedEventId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CuratorsId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("CuratedEventId", "CuratorsId");
+
+                    b.HasIndex("CuratorsId");
+
+                    b.ToTable("EventCurators", (string)null);
+                });
 
             modelBuilder.Entity("Landing.Core.Models.Events.Event", b =>
                 {
@@ -37,6 +55,11 @@ namespace Landing.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("Discriminator")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
                     b.Property<string>("ImagePath")
                         .IsRequired()
                         .HasColumnType("text");
@@ -52,7 +75,7 @@ namespace Landing.Infrastructure.Migrations
 
                     b.ToTable("Events");
 
-                    b.HasDiscriminator<int>("Type").HasValue(0);
+                    b.HasDiscriminator().HasValue("Event");
 
                     b.UseTphMappingStrategy();
                 });
@@ -184,12 +207,6 @@ namespace Landing.Infrastructure.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
-                    b.Property<string>("FullName")
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasMaxLength(300)
-                        .HasColumnType("character varying(300)");
-
                     b.Property<bool>("IsEmailConfirmed")
                         .HasColumnType("boolean");
 
@@ -201,7 +218,12 @@ namespace Landing.Infrastructure.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("integer");
 
+                    b.Property<int?>("RegularEventId")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("RegularEventId");
 
                     b.ToTable("Users");
                 });
@@ -250,41 +272,11 @@ namespace Landing.Infrastructure.Migrations
                     b.ToTable("UserRoles");
                 });
 
-            modelBuilder.Entity("RegularEventUser", b =>
-                {
-                    b.Property<int>("ParticipantsId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("RegularEventId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("ParticipantsId", "RegularEventId");
-
-                    b.HasIndex("RegularEventId");
-
-                    b.ToTable("EventParticipants", (string)null);
-                });
-
-            modelBuilder.Entity("UserCuratedEvents", b =>
-                {
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("EventId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("UserId", "EventId");
-
-                    b.HasIndex("EventId");
-
-                    b.ToTable("UserCuratedEvents", (string)null);
-                });
-
             modelBuilder.Entity("Landing.Core.Models.Events.CuratedEvent", b =>
                 {
                     b.HasBaseType("Landing.Core.Models.Events.Event");
 
-                    b.HasDiscriminator().HasValue(2);
+                    b.HasDiscriminator().HasValue("Curated");
                 });
 
             modelBuilder.Entity("Landing.Core.Models.Events.OfflineEvent", b =>
@@ -306,14 +298,29 @@ namespace Landing.Infrastructure.Migrations
                         .HasPrecision(9, 6)
                         .HasColumnType("numeric(9,6)");
 
-                    b.HasDiscriminator().HasValue(3);
+                    b.HasDiscriminator().HasValue("Offline");
                 });
 
             modelBuilder.Entity("Landing.Core.Models.Events.RegularEvent", b =>
                 {
                     b.HasBaseType("Landing.Core.Models.Events.Event");
 
-                    b.HasDiscriminator().HasValue(1);
+                    b.HasDiscriminator().HasValue("Regular");
+                });
+
+            modelBuilder.Entity("CuratedEventUser", b =>
+                {
+                    b.HasOne("Landing.Core.Models.Events.CuratedEvent", null)
+                        .WithMany()
+                        .HasForeignKey("CuratedEventId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Landing.Core.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("CuratorsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Landing.Core.Models.Events.EventAttendance", b =>
@@ -346,6 +353,13 @@ namespace Landing.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Landing.Core.Models.User", b =>
+                {
+                    b.HasOne("Landing.Core.Models.Events.RegularEvent", null)
+                        .WithMany("Participants")
+                        .HasForeignKey("RegularEventId");
+                });
+
             modelBuilder.Entity("Landing.Core.Models.UserPointsTransaction", b =>
                 {
                     b.HasOne("Landing.Core.Models.User", "User")
@@ -376,36 +390,6 @@ namespace Landing.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("RegularEventUser", b =>
-                {
-                    b.HasOne("Landing.Core.Models.User", null)
-                        .WithMany()
-                        .HasForeignKey("ParticipantsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Landing.Core.Models.Events.RegularEvent", null)
-                        .WithMany()
-                        .HasForeignKey("RegularEventId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("UserCuratedEvents", b =>
-                {
-                    b.HasOne("Landing.Core.Models.Events.CuratedEvent", null)
-                        .WithMany()
-                        .HasForeignKey("EventId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Landing.Core.Models.User", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("Landing.Core.Models.Events.Event", b =>
                 {
                     b.Navigation("Attendances");
@@ -425,6 +409,11 @@ namespace Landing.Infrastructure.Migrations
                     b.Navigation("RefreshTokens");
 
                     b.Navigation("UserRoles");
+                });
+
+            modelBuilder.Entity("Landing.Core.Models.Events.RegularEvent", b =>
+                {
+                    b.Navigation("Participants");
                 });
 #pragma warning restore 612, 618
         }

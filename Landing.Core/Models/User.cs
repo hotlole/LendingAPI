@@ -15,6 +15,21 @@ namespace Landing.Core.Models
         [Key]
         public int Id { get; set; }
 
+        [Required]
+        [MaxLength(100)]
+        public string LastName { get; set; } = string.Empty;
+
+        [Required]
+        [MaxLength(100)]
+        public string FirstName { get; set; } = string.Empty;
+
+        [MaxLength(100)]
+        public string MiddleName { get; set; } = string.Empty;
+
+        [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
+        [MaxLength(300)]
+        public string FullName { get; private set; } = string.Empty;
+
         /// <summary>
         /// Адрес электронной почты пользователя.
         /// </summary>

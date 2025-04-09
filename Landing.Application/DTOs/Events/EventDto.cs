@@ -9,6 +9,7 @@ namespace Landing.Application.DTOs.Events
     /// <summary>
     /// DTO для мероприятия.
     /// </summary>
+    [AutoMap(typeof(Event))]
     public class EventDto : IMapWith<Event>
     {
         /// <summary>

@@ -17,7 +17,8 @@ using Hangfire.PostgreSql;
 var builder = WebApplication.CreateBuilder(args);
 
 // Добавляем контроллеры
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddNewtonsoftJson();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<INewsRepository, NewsRepository>();
