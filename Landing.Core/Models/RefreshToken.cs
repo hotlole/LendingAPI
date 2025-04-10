@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Landing.Core.Models.Users;
 
 namespace Landing.Core.Models
 {

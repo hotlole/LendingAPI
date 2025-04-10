@@ -1,4 +1,6 @@
-﻿namespace Landing.Core.Models.Events
+﻿using Landing.Core.Models.Users;
+
+namespace Landing.Core.Models.Events
 {
     public class CuratedEvent : Event
     {

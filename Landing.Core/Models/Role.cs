@@ -1,4 +1,6 @@
-﻿namespace Landing.Core.Models
+﻿using Landing.Core.Models.Users;
+
+namespace Landing.Core.Models
 {
     public class Role
     {

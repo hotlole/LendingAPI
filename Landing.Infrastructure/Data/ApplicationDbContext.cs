@@ -1,5 +1,6 @@
 ﻿using Landing.Core.Models;
 using Landing.Core.Models.Events;
+using Landing.Core.Models.Users;
 using Landing.Infrastructure.Data.Configurations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;

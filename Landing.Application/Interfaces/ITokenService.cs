@@ -1,4 +1,5 @@
 ﻿using Landing.Core.Models;
+using Landing.Core.Models.Users;
 
 namespace Landing.Application.Interfaces
 {

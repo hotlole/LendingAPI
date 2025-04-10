@@ -67,6 +67,7 @@ builder.Services.AddHangfire(config =>
 builder.Services.AddHangfireServer();
 builder.Services.AddSingleton<BackgroundTasksService>();
 builder.Services.AddHostedService<BackgroundTasksService>();
+builder.Services.AddHttpClient<VkService>();
 
 
 builder.Services.AddAuthorization();

@@ -1,7 +1,7 @@
 ﻿using Landing.Application.DTOs.Events;
 using Landing.Application.Interfaces;
-using Landing.Core.Models;
 using Landing.Core.Models.Events;
+using Landing.Core.Models.Users;
 using Landing.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 

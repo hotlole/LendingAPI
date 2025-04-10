@@ -1,4 +1,4 @@
-﻿using Landing.Core.Models;
+﻿using Landing.Core.Models.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System.Reflection.Emit;

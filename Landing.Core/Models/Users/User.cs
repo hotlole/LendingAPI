@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Landing.Core.Models.Events;
 
-namespace Landing.Core.Models
+namespace Landing.Core.Models.Users
 {
     /// <summary>
     /// Представляет пользователя системы.

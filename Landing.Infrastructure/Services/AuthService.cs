@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Landing.Application.Interfaces;
 using Landing.Core.Models;
+using Landing.Core.Models.Users;
 using Landing.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;

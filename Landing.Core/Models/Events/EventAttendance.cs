@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Landing.Core.Models.Users;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace Landing.Core.Models.Events

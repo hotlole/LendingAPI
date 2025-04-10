@@ -13,6 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using Landing.Application.Interfaces;
 using Microsoft.AspNetCore.Identity.Data;
 using System.Security.Cryptography;
+using Landing.Core.Models.Users;
 
 namespace LandingAPI.Controllers
 {

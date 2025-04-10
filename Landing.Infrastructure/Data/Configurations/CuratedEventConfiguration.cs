@@ -1,7 +1,7 @@
 ﻿using Landing.Core.Models.Events;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore;
-using Landing.Core.Models;
+using Landing.Core.Models.Users;
 
 public class CuratedEventConfiguration : IEntityTypeConfiguration<CuratedEvent>
 {

@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Landing.Core.Models
+namespace Landing.Core.Models.Users
 {
     /// <summary>
     /// Транзакция баллов пользователя

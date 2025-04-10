@@ -1,5 +1,5 @@
 ﻿using Hangfire;
-using Landing.Core.Models;
+using Landing.Core.Models.Users;
 using Landing.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
