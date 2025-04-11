@@ -24,7 +24,7 @@ namespace Landing.Core.Models.Users
         public string FirstName { get; set; } = string.Empty;
 
         [MaxLength(100)]
-        public string MiddleName { get; set; } = string.Empty;
+        public string? MiddleName { get; set; }
 
         [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
         [MaxLength(300)]

@@ -13,6 +13,7 @@ using Landing.Infrastructure.Services;
 using Serilog;
 using Hangfire;
 using Hangfire.PostgreSql;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,20 +47,31 @@ builder.Host.UseSerilog();
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]);
 // Настраиваем аутентификацию через JWT
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+})
+.AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+{
+    options.LoginPath = "/admin/login";
+})
+.AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+{
+    var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+    var secretKey = Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]);
+
+    options.TokenValidationParameters = new TokenValidationParameters
     {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtSettings["Issuer"],
-            ValidAudience = jwtSettings["Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(secretKey)
-        };
-    });
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtSettings["Issuer"],
+        ValidAudience = jwtSettings["Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(secretKey)
+    };
+});
 
 // Добавляем Hangfire в контейнер сервисов
 builder.Services.AddHangfire(config =>
@@ -86,8 +98,6 @@ using (var scope = app.Services.CreateScope())
 {
     
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    /*await AdminSeeder.SeedAdminAsync(context);*/
-
     if (!context.Roles.Any())
     {
         context.Roles.AddRange(new List<Role>
@@ -99,6 +109,8 @@ using (var scope = app.Services.CreateScope())
 
         context.SaveChanges();
     }
+    
+    await AdminSeeder.SeedAdminAsync(context);
 }
 
 app.UseAuthentication();
@@ -113,8 +125,15 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.MapControllers();
 app.UseStaticFiles();
-// Настраиваем Hangfire Dashboard
-app.UseHangfireDashboard("/hangfire");
+// Настраиваем Hangfire Dashboard с фильтром авторизации
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = new[]
+    {
+        new HangfireAuthorizationFilter()
+    }
+});
+
 app.MapGet("/", () => "Hello World!");
 // Настраиваем задачи Hangfire
 RecurringJob.AddOrUpdate<BackgroundTasksService>(
