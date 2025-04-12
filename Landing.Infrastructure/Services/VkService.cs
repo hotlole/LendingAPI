@@ -3,7 +3,6 @@ using Microsoft.Extensions.Configuration;
 using System.Net.Http.Json;
 using System.Text.Json;
 
-
 namespace Landing.Infrastructure.Services
 {
     public class VkService
@@ -11,20 +10,34 @@ namespace Landing.Infrastructure.Services
         private readonly HttpClient _httpClient;
         private readonly string _token;
         private readonly string _version;
+        private readonly string _groupId;
 
         public VkService(IConfiguration config, HttpClient httpClient)
         {
             _httpClient = httpClient;
             _token = config["Vk:Token"]!;
             _version = "5.199";
+            _groupId = config["Vk:GroupId"]!;
         }
 
-        public async Task<List<VkPostDto>> GetGroupPostsAsync(string groupId, int count = 10)
+        public async Task<List<VkPostDto>> GetGroupPostsAsync(int count = 10)
         {
-            var url = $"https://api.vk.com/method/wall.get?owner_id=-{groupId}&count={count}&access_token={_token}&v={_version}";
-            var response = await _httpClient.GetFromJsonAsync<JsonElement>(url);
+            var url = $"https://api.vk.com/method/wall.get?owner_id=-{_groupId}&count={count}&access_token={_token}&v={_version}";
+            var responseJson = await _httpClient.GetFromJsonAsync<JsonElement>(url);
 
-            var items = response.GetProperty("response").GetProperty("items");
+            // Проверяем, есть ли ошибка от VK API
+            if (responseJson.TryGetProperty("error", out var error))
+            {
+                var errorMsg = error.GetProperty("error_msg").GetString();
+                throw new Exception($"VK API error: {errorMsg}");
+            }
+
+            // Проверяем наличие "response" и "items"
+            if (!responseJson.TryGetProperty("response", out var response) ||
+                !response.TryGetProperty("items", out var items))
+            {
+                throw new Exception("VK API: отсутствует 'response.items'. Ответ: " + responseJson.ToString());
+            }
 
             var posts = new List<VkPostDto>();
 
@@ -34,14 +47,17 @@ namespace Landing.Infrastructure.Services
                 var unixDate = item.GetProperty("date").GetInt32();
                 var date = DateTimeOffset.FromUnixTimeSeconds(unixDate).DateTime;
 
-                string? imageUrl = item.TryGetProperty("attachments", out var attachments)
-                    ? attachments.EnumerateArray()
+                string? imageUrl = null;
+
+                if (item.TryGetProperty("attachments", out var attachments))
+                {
+                    imageUrl = attachments.EnumerateArray()
                         .Where(a => a.GetProperty("type").GetString() == "photo")
                         .SelectMany(a => a.GetProperty("photo").GetProperty("sizes").EnumerateArray())
-                        .OrderByDescending(s => s.GetProperty("type").GetString()) // x > m > s
+                        .OrderByDescending(s => s.GetProperty("type").GetString()) // типы: w > z > y > r > q > p > o > x > m > s
                         .Select(s => s.GetProperty("url").GetString())
-                        .FirstOrDefault()
-                    : null;
+                        .FirstOrDefault();
+                }
 
                 posts.Add(new VkPostDto
                 {
@@ -54,5 +70,4 @@ namespace Landing.Infrastructure.Services
             return posts;
         }
     }
-
 }

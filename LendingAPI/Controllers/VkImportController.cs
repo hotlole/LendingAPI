@@ -25,7 +25,7 @@ namespace LendingAPI.Controllers
         [HttpPost("import")]
         public async Task<IActionResult> ImportVkPosts([FromQuery] string groupId)
         {
-            var posts = await _vkService.GetGroupPostsAsync(groupId, count: 5);
+            var posts = await _vkService.GetGroupPostsAsync(count: 5);
 
             foreach (var post in posts)
             {
