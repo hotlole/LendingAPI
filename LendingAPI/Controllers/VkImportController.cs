@@ -23,30 +23,39 @@ namespace LendingAPI.Controllers
         }
 
         [HttpPost("import")]
-        public async Task<IActionResult> ImportVkPosts([FromQuery] string groupId)
+        public async Task<IActionResult> ImportVkPosts()
         {
             var posts = await _vkService.GetGroupPostsAsync(count: 5);
+
+            int imported = 0;
 
             foreach (var post in posts)
             {
                 if (string.IsNullOrWhiteSpace(post.Text))
                     continue;
 
-                if (_context.News.Any(n => n.Title == post.Text)) // защита от дубликатов
+                if (_context.News.Any(n => n.Title == post.Text))
                     continue;
+
+                var title = post.Text.Length > 100 ? post.Text[..100] + "..." : post.Text;
 
                 _context.News.Add(new News
                 {
-                    Title = post.Text.Length > 100 ? post.Text[..100] + "..." : post.Text,
+                    Title = title,
                     Description = post.Text,
                     PublishedAt = post.PublishedAt,
                     ImageUrl = post.ImageUrl
                 });
+
+                _logger.LogInformation("Импортирован пост: {Title}", title);
+                imported++;
             }
 
             await _context.SaveChangesAsync();
-            return Ok(new { imported = posts.Count });
+
+            return Ok(new { imported });
         }
+
     }
 
 }
