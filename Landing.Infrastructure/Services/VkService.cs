@@ -38,7 +38,7 @@ public class VkService
         {
             var text = item.GetProperty("text").GetString();
             var unixDate = item.GetProperty("date").GetInt32();
-            var date = DateTimeOffset.FromUnixTimeSeconds(unixDate).DateTime;
+            var date = DateTimeOffset.FromUnixTimeSeconds(unixDate).UtcDateTime;
 
             string? imageUrl = null;
             if (item.TryGetProperty("attachments", out var attachments))

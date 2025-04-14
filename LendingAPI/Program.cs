@@ -14,6 +14,7 @@ using Serilog;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -89,6 +90,8 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IUserTransactionService, UserTransactionService>();
+builder.Services.AddScoped<FileCleanupService>();
+
 
 
 
@@ -137,10 +140,10 @@ app.UseHangfireDashboard("/hangfire", new DashboardOptions
 
 app.MapGet("/", () => "Hello World!");
 // Настраиваем задачи Hangfire
-RecurringJob.AddOrUpdate<BackgroundTasksService>(
-    "delete-old-files",
-    x => x.DeleteOldFilesAsync(),
-    Cron.HourInterval(6)); // Каждые 6 часов
+RecurringJob.AddOrUpdate<FileCleanupService>(
+    "cleanup-files",
+    service => service.CleanupOrphanedFilesAsync(3),
+    Cron.Daily);
 
 RecurringJob.AddOrUpdate<BackgroundTasksService>(
     "award-birthday-points",

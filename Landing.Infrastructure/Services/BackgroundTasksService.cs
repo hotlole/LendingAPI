@@ -39,32 +39,19 @@ namespace Landing.Infrastructure.Services
         [AutomaticRetry(Attempts = 3)]
         public async Task DeleteOldFilesAsync()
         {
-            _logger.LogInformation("Удаление старых файлов...");
-
+            using var scope = _serviceProvider.CreateScope();
+            var cleanupService = scope.ServiceProvider.GetRequiredService<FileCleanupService>();
             try
             {
-                string folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
-                if (Directory.Exists(folderPath))
-                {
-                    var files = Directory.GetFiles(folderPath);
-                    foreach (var file in files)
-                    {
-                        var fileInfo = new FileInfo(file);
-                        if (fileInfo.CreationTime < DateTime.Now.AddDays(-30)) // Старше 30 дней
-                        {
-                            fileInfo.Delete();
-                            _logger.LogInformation($"Удалён файл: {fileInfo.Name}");
-                        }
-                    }
-                }
+                var removed = await cleanupService.CleanupOrphanedFilesAsync(olderThanDays: 3);
+                _logger.LogInformation($"Удалено {removed} неиспользуемых файлов.");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Ошибка при удалении файлов: {ex.Message}");
+                _logger.LogError(ex, "Ошибка при удалении неиспользуемых файлов.");
             }
-
-            await Task.CompletedTask;
         }
+
 
         [AutomaticRetry(Attempts = 3)]
         public async Task AwardBirthdayPointsAsync()

@@ -2,16 +2,19 @@
 using Landing.Core.Models.Events;
 using Landing.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Hosting;
 
 namespace Landing.Infrastructure.Repositories
 {
     public class EventRepository : IEventRepository
     {
         private readonly ApplicationDbContext _context;
+        private readonly IWebHostEnvironment _env;
 
-        public EventRepository(ApplicationDbContext context)
+        public EventRepository(ApplicationDbContext context, IWebHostEnvironment env)
         {
             _context = context;
+            _env = env;
         }
 
         public async Task<IEnumerable<Event>> GetAllAsync()
@@ -37,20 +40,27 @@ namespace Landing.Infrastructure.Repositories
             await _context.SaveChangesAsync();
             return eventItem;
         }
+
         public async Task AddAsync(Event eventEntity)
         {
             await _context.Events.AddAsync(eventEntity);
             await _context.SaveChangesAsync();
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public async Task  DeleteAsync(int id)
         {
-            var eventItem = await _context.Events.FindAsync(id);
-            if (eventItem == null) return false;
+            var entity = await _context.Events.FindAsync(id);
+            if (entity == null) return;
 
-            _context.Events.Remove(eventItem);
+            if (!string.IsNullOrEmpty(entity.ImagePath))
+            {
+                var fullPath = Path.Combine(_env.WebRootPath, entity.ImagePath);
+                if (File.Exists(fullPath))
+                    File.Delete(fullPath);
+            }
+
+            _context.Events.Remove(entity);
             await _context.SaveChangesAsync();
-            return true;
         }
     }
 }
