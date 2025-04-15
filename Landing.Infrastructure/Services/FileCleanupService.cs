@@ -1,7 +1,6 @@
-﻿using Landing.Infrastructure.Data;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Hosting;
+using Landing.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Landing.Infrastructure.Services;
@@ -18,41 +17,53 @@ public class FileCleanupService
         _env = env;
         _logger = logger;
     }
+
     public async Task<int> CleanupOrphanedFilesAsync(int olderThanDays = 3)
     {
+        var uploadsPath = Path.Combine(_env.WebRootPath, "uploads");
+        if (!Directory.Exists(uploadsPath))
+        {
+            _logger.LogWarning("Папка uploads не найдена: " + uploadsPath);
+            return 0;
+        }
+
+        var cutoffDate = DateTime.UtcNow.AddDays(-olderThanDays);
+        var allFiles = Directory.GetFiles(uploadsPath, "*", SearchOption.AllDirectories);
+
+        var usedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        // Получаем пути из базы
+        var newsPaths = await _context.News
+            .Where(n => n.ImageUrl != null)
+            .Select(n => n.ImageUrl)
+            .ToListAsync();
+
+        var eventPaths = await _context.Events
+            .Where(e => e.ImagePath != null)
+            .Select(e => e.ImagePath)
+            .ToListAsync();
+
+        usedPaths.UnionWith(newsPaths.Select(p => Path.Combine(_env.WebRootPath, p.TrimStart('/', '\\'))));
+        usedPaths.UnionWith(eventPaths.Select(p => Path.Combine(_env.WebRootPath, p.TrimStart('/', '\\'))));
+
         int deletedCount = 0;
-
-        string uploadsFolder = Path.Combine(_env.WebRootPath, "uploads");
-
-        if (!Directory.Exists(uploadsFolder))
-            return deletedCount;
-
-        var usedPaths = new HashSet<string>(
-            (await _context.News.Select(n => n.ImageUrl).ToListAsync())
-            .Concat(await _context.Events.Select(e => e.ImagePath).ToListAsync())
-            .Where(p => !string.IsNullOrEmpty(p))
-        );
-
-        var allFiles = Directory.GetFiles(uploadsFolder, "*", SearchOption.AllDirectories);
 
         foreach (var filePath in allFiles)
         {
-            string relativePath = Path.GetRelativePath(_env.WebRootPath, filePath).Replace("\\", "/");
-
-            if (!usedPaths.Contains(relativePath))
+            if (!usedPaths.Contains(filePath))
             {
                 var fileInfo = new FileInfo(filePath);
-                if (fileInfo.CreationTimeUtc < DateTime.UtcNow.AddDays(-olderThanDays))
+                if (fileInfo.CreationTimeUtc < cutoffDate)
                 {
                     try
                     {
-                        fileInfo.Delete();
-                        _logger.LogInformation($"Удалён неиспользуемый файл: {relativePath}");
+                        File.Delete(filePath);
                         deletedCount++;
+                        _logger.LogInformation($"Удалён неиспользуемый файл: {filePath}");
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogWarning(ex, $"Ошибка при удалении файла {relativePath}");
+                        _logger.LogWarning(ex, $"Ошибка при удалении файла: {filePath}");
                     }
                 }
             }
@@ -60,6 +71,4 @@ public class FileCleanupService
 
         return deletedCount;
     }
-
-
 }

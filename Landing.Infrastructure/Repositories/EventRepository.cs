@@ -47,20 +47,27 @@ namespace Landing.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task  DeleteAsync(int id)
+        public async Task<bool> DeleteAsync(int id)
         {
             var entity = await _context.Events.FindAsync(id);
-            if (entity == null) return;
+            if (entity == null)
+                return false;
 
+            // Удаление файла, если указан путь
             if (!string.IsNullOrEmpty(entity.ImagePath))
             {
-                var fullPath = Path.Combine(_env.WebRootPath, entity.ImagePath);
+                var fullPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", entity.ImagePath);
                 if (File.Exists(fullPath))
+                {
                     File.Delete(fullPath);
+                }
             }
 
             _context.Events.Remove(entity);
             await _context.SaveChangesAsync();
+            return true;
         }
+
+
     }
 }

@@ -4,9 +4,9 @@ using Landing.Application.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using AutoMapper;
-using System.Linq.Expressions;
 using System.Linq.Dynamic.Core;
 using Microsoft.EntityFrameworkCore;
+using Landing.Infrastructure.Services;
 
 namespace LandingAPI.Controllers
 {
@@ -147,5 +147,19 @@ namespace LandingAPI.Controllers
 
             return $"/uploads/{uniqueFileName}";
         }
+
+        [HttpPost("upload")]
+        public async Task<IActionResult> UploadImage(IFormFile file, [FromServices] ImageCompressionService imageService)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("Файл не выбран.");
+
+            using var stream = file.OpenReadStream();
+            var paths = await imageService.SaveCompressedVersionsAsync(stream, file.FileName);
+
+            // Вернуть все пути, например:
+            return Ok(paths); // { original: "...", large: "...", medium: "...", small: "..." }
+        }
+
     }
 }

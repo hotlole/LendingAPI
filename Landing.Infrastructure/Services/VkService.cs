@@ -61,4 +61,15 @@ public class VkService
 
         return posts;
     }
+    public void DeleteNewsImages(string fileBase, string folder)
+    {
+        var sizes = new[] { "512x380", "256x190", "original" };
+
+        foreach (var size in sizes)
+        {
+            var path = Path.Combine("wwwroot", folder, $"{fileBase}_{size}.jpg");
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
 }

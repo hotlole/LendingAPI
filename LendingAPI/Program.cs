@@ -91,6 +91,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IUserTransactionService, UserTransactionService>();
 builder.Services.AddScoped<FileCleanupService>();
+builder.Services.AddScoped<ImageCompressionService>();
 
 
 

@@ -44,41 +44,5 @@ namespace Landing.Infrastructure.Data
             modelBuilder.ApplyConfiguration(new CuratedEventConfiguration());
             modelBuilder.ApplyConfiguration(new RegularEventConfiguration());
         }
-        public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
-        {
-            var deletedEvents = ChangeTracker.Entries<Event>()
-                .Where(e => e.State == EntityState.Deleted)
-                .Select(e => e.Entity)
-                .ToList();
-
-            var deletedNews = ChangeTracker.Entries<News>()
-                .Where(n => n.State == EntityState.Deleted)
-                .Select(n => n.Entity)
-                .ToList();
-
-            var result = await base.SaveChangesAsync(cancellationToken);
-
-            foreach (var ev in deletedEvents)
-            {
-                DeleteFileIfExists(ev.ImagePath);
-            }
-
-            foreach (var news in deletedNews)
-            {
-                DeleteFileIfExists(news.ImageUrl);
-            }
-
-            return result;
-        }
-
-        private void DeleteFileIfExists(string? relativePath)
-        {
-            if (string.IsNullOrWhiteSpace(relativePath)) return;
-
-            var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", relativePath.TrimStart('/'));
-            if (File.Exists(path))
-                File.Delete(path);
-        }
-
     }
 }
