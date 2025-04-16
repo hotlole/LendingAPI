@@ -1,4 +1,5 @@
-﻿using Landing.Application.DTOs.Events;
+﻿using AutoMapper;
+using Landing.Application.DTOs.Events;
 using Landing.Application.Interfaces;
 using Landing.Core.Models.Events;
 using Landing.Core.Models.Users;
@@ -10,12 +11,13 @@ public class EventService
     private readonly IEventRepository _eventRepository;
     private readonly IUserRepository _userRepository;
     private readonly ApplicationDbContext _context;
-
-    public EventService(IEventRepository eventRepository, IUserRepository userRepository, ApplicationDbContext context)
+    private readonly IMapper _mapper;
+    public EventService(IEventRepository eventRepository, IUserRepository userRepository, ApplicationDbContext context, IMapper mapper)
     {
         _eventRepository = eventRepository;
         _userRepository = userRepository;
         _context = context;
+        _mapper = mapper;
     }
 
     public async Task<IEnumerable<Event>> GetAllAsync() => await _eventRepository.GetAllAsync();
@@ -74,52 +76,38 @@ public class EventService
     public async Task DeleteAsync(int id) => await _eventRepository.DeleteAsync(id);
     public async Task<Event> CreateAsync(CreateEventDto dto)
     {
-        Event eventItem;
-        switch (dto.Type)
+        Event eventItem = dto.Type switch
         {
-            case EventType.Regular:
-                eventItem = new Event
-                {
-                    Title = dto.Title,
-                    Description = dto.Description,
-                    Date = dto.Date
-                };
-                break;
-            case EventType.Curated:
-                var curatorUsers = dto.CuratorIds != null
-                    ? await _context.Users.Where(u => dto.CuratorIds.Contains(u.Id)).ToListAsync()
-                    : new List<User>();
+            EventType.Regular => _mapper.Map<RegularEvent>(dto), // добавим этот класс
+            EventType.Curated => _mapper.Map<CuratedEvent>(dto),
+            EventType.Offline => CreateOfflineEvent(dto),
+            _ => throw new ArgumentException("Некорректный тип мероприятия.")
+        };
 
-                eventItem = new CuratedEvent
-                {
-                    Title = dto.Title,
-                    Description = dto.Description,
-                    Date = dto.Date,
-                    Curators = curatorUsers
-                };
-                break;
 
-            case EventType.Offline:
-                if (!IsValidCoordinate(dto.Latitude) || !IsValidCoordinate(dto.Longitude))
-                    throw new ArgumentException("Координаты должны быть в диапазоне от -90 до 90.");
-                eventItem = new OfflineEvent
-                {
-                    Title = dto.Title,
-                    Description = dto.Description,
-                    Date = dto.Date,
-                    Latitude = dto.Latitude ?? 0,
-                    Longitude = dto.Longitude ?? 0,
-                    Address = dto.Address,
-                    CustomHtmlTemplate = dto.CustomHtmlTemplate ?? string.Empty
-                };
-                break;
-            default:
-                throw new ArgumentException("Некорректный тип мероприятия.");
+        if (eventItem is CuratedEvent curated && dto.CuratorIds != null)
+        {
+            var curators = await _context.Users.Where(u => dto.CuratorIds.Contains(u.Id)).ToListAsync();
+            curated.Curators = curators;
         }
 
         await _eventRepository.AddAsync(eventItem);
         return eventItem;
     }
+
+    private OfflineEvent CreateOfflineEvent(CreateEventDto dto)
+    {
+        if (!IsValidCoordinate(dto.Latitude) || !IsValidCoordinate(dto.Longitude))
+            throw new ArgumentException("Координаты должны быть в диапазоне от -90 до 90.");
+
+        var offlineEvent = _mapper.Map<OfflineEvent>(dto);
+        offlineEvent.Latitude = dto.Latitude ?? 0;
+        offlineEvent.Longitude = dto.Longitude ?? 0;
+        offlineEvent.CustomHtmlTemplate ??= string.Empty;
+
+        return offlineEvent;
+    }
+
 
     public async Task<bool> RegisterForEventAsync(int eventId, int userId)
     {

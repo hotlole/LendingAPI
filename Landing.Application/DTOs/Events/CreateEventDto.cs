@@ -24,7 +24,9 @@ namespace Landing.Application.DTOs.Events
 
         [Required]
         [SwaggerSchema("Тип мероприятия.")]
+        [Range(1, 3, ErrorMessage = "Тип мероприятия должен быть Regular, Curated или Offline.")]
         public EventType Type { get; set; }
+
 
         [SwaggerSchema("Широта (только для очных мероприятий).")]
         public decimal? Latitude { get; set; }

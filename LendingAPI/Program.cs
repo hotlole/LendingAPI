@@ -15,6 +15,7 @@ using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
+using Landing.Application.Mappings;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -83,7 +84,7 @@ builder.Services.AddSingleton<BackgroundTasksService>();
 builder.Services.AddHostedService<BackgroundTasksService>();
 builder.Services.AddHttpClient<VkService>();
 
-
+builder.Services.AddAutoMapper(typeof(EventProfile));
 builder.Services.AddAuthorization();
 builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
 builder.Services.AddScoped<IEmailService, EmailService>();
