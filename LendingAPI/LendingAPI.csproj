@@ -36,8 +36,11 @@
     <ProjectReference Include="..\Landing.Core\Landing.Core.csproj" />
     <ProjectReference Include="..\Landing.Infrastructure\Landing.Infrastructure.csproj" />
   </ItemGroup>
+	<PropertyGroup>
+		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+	</PropertyGroup>
 
-  <ItemGroup>
+	<ItemGroup>
     <Folder Include="wwwroot\uploads\" />
   </ItemGroup>
 

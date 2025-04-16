@@ -183,7 +183,8 @@ static void ConfigureDevelopmentServices(IServiceCollection services)
             }
         });
 
-        
+        opts.SchemaFilter<EnumDescriptionSchemaFilter>();
+        opts.UseInlineDefinitionsForEnums();
         opts.CustomSchemaIds(type => type.FullName);
         opts.IncludeXmlComments(xmlFilePath, true);
         opts.UseAllOfToExtendReferenceSchemas();
