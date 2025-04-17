@@ -1,5 +1,6 @@
 ﻿using Landing.Core.Enums;
 using Landing.Core.Models;
+using Landing.Core.Models.News;
 using Landing.Infrastructure.Data;
 using Landing.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -40,14 +41,16 @@ namespace LendingAPI.Controllers
 
                 var title = post.Text.Length > 100 ? post.Text[..100] + "..." : post.Text;
                 string? savedImagePath = null;
+                string? fileBase = null;
 
+                // Сохраняем главное изображение
                 if (!string.IsNullOrWhiteSpace(post.ImageUrl))
                 {
                     try
                     {
                         var dimensions = preferredSize.GetDimensions();
                         var suffix = preferredSize.ToFileSuffix();
-                        var fileBase = $"vk_{post.PublishedAt:yyyyMMdd_HHmmss}";
+                        fileBase = $"vk_{post.PublishedAt:yyyyMMdd_HHmmss}";
                         var path = Path.Combine("wwwroot", "images/news");
                         Directory.CreateDirectory(path);
                         var filePath = Path.Combine(path, $"{fileBase}_{suffix}.jpg");
@@ -68,14 +71,33 @@ namespace LendingAPI.Controllers
                     }
                 }
 
-                _context.News.Add(new News
+                var news = new News
                 {
                     Title = title,
                     Description = post.Text,
+                    Content = post.Text,
                     PublishedAt = post.PublishedAt,
-                    ImageUrl = savedImagePath
-                });
+                    ImageUrl = savedImagePath,
+                    VideoUrl = post.VideoUrl,
+                    VideoPreviewUrl = post.VideoPreviewUrl,
+                    ExternalLink = post.ExternalLink,
+                    LinkTitle = post.LinkTitle,
+                    AdditionalImages = new List<NewsImage>()
+                };
 
+                // Сохраняем дополнительные изображения
+                if (post.AdditionalImages != null && post.AdditionalImages.Count > 1)
+                {
+                    foreach (var imageUrl in post.AdditionalImages.Skip(1)) // первую мы уже сохранили
+                    {
+                        news.AdditionalImages.Add(new NewsImage
+                        {
+                            Url = imageUrl
+                        });
+                    }
+                }
+
+                _context.News.Add(news);
                 _logger.LogInformation("Импортирован пост: {Title}", title);
                 imported++;
             }
@@ -84,6 +106,7 @@ namespace LendingAPI.Controllers
 
             return Ok(new { imported });
         }
+
 
     }
 

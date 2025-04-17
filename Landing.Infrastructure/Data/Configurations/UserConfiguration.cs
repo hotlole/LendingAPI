@@ -15,6 +15,11 @@ namespace Landing.Infrastructure.Data.Configurations
                     v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
                     v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null
                 );
+            builder.Property(u => u.Points)
+                .HasComputedColumnSql(
+                "(SELECT ISNULL(SUM(Value), 0) FROM UserPointsTransactions WHERE UserId = Id)",
+                stored: true
+                );  
         }
     }
 }

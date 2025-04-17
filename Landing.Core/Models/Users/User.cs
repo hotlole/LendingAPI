@@ -78,7 +78,7 @@ namespace Landing.Core.Models.Users
         /// Баллы пользователя (вычисляемое свойство).
         /// </summary>
         [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
-        public int Points { get; set; }
+        public int Points { get; set; } 
 
         /// <summary>
         /// Дата рождения пользователя.

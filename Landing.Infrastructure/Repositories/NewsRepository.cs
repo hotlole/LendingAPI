@@ -1,8 +1,8 @@
 ﻿using Landing.Application.Interfaces;
-using Landing.Core.Models;
 using Landing.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Hosting;
+using Landing.Core.Models.News;
 
 namespace Landing.Infrastructure.Repositories
 {

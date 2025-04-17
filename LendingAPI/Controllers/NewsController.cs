@@ -1,5 +1,4 @@
 ﻿using Landing.Application.Services;
-using Landing.Core.Models;
 using Landing.Application.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,6 +6,7 @@ using AutoMapper;
 using System.Linq.Dynamic.Core;
 using Microsoft.EntityFrameworkCore;
 using Landing.Infrastructure.Services;
+using Landing.Core.Models.News;
 
 namespace LandingAPI.Controllers
 {

@@ -3,6 +3,7 @@ using System;
 using Landing.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Landing.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250417194417_AddPointsWithTrigger")]
+    partial class AddPointsWithTrigger
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -89,7 +92,7 @@ namespace Landing.Infrastructure.Migrations
                     b.ToTable("EventAttendances");
                 });
 
-            modelBuilder.Entity("Landing.Core.Models.News.News", b =>
+            modelBuilder.Entity("Landing.Core.Models.News", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -105,13 +108,7 @@ namespace Landing.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("ExternalLink")
-                        .HasColumnType("text");
-
                     b.Property<string>("ImageUrl")
-                        .HasColumnType("text");
-
-                    b.Property<string>("LinkTitle")
                         .HasColumnType("text");
 
                     b.Property<DateTime>("PublishedAt")
@@ -119,12 +116,6 @@ namespace Landing.Infrastructure.Migrations
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("VideoPreviewUrl")
-                        .HasColumnType("text");
-
-                    b.Property<string>("VideoUrl")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -277,28 +268,6 @@ namespace Landing.Infrastructure.Migrations
                     b.ToTable("UserRoles");
                 });
 
-            modelBuilder.Entity("NewsImage", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("NewsId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Url")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("NewsId");
-
-                    b.ToTable("NewsImages");
-                });
-
             modelBuilder.Entity("RegularEventUser", b =>
                 {
                     b.Property<int>("ParticipantsId")
@@ -425,17 +394,6 @@ namespace Landing.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("NewsImage", b =>
-                {
-                    b.HasOne("Landing.Core.Models.News.News", "News")
-                        .WithMany("AdditionalImages")
-                        .HasForeignKey("NewsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("News");
-                });
-
             modelBuilder.Entity("RegularEventUser", b =>
                 {
                     b.HasOne("Landing.Core.Models.Users.User", null)
@@ -469,11 +427,6 @@ namespace Landing.Infrastructure.Migrations
             modelBuilder.Entity("Landing.Core.Models.Events.Event", b =>
                 {
                     b.Navigation("Attendances");
-                });
-
-            modelBuilder.Entity("Landing.Core.Models.News.News", b =>
-                {
-                    b.Navigation("AdditionalImages");
                 });
 
             modelBuilder.Entity("Landing.Core.Models.Role", b =>

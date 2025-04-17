@@ -1,5 +1,5 @@
 ﻿using Landing.Application.Interfaces;
-using Landing.Core.Models;
+using Landing.Core.Models.News;
 
 namespace Landing.Application.Services
 {

@@ -1,4 +1,4 @@
-﻿using Landing.Core.Models;
+﻿using Landing.Core.Models.News;
 
 namespace Landing.Application.Interfaces
 {
