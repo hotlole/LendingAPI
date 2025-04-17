@@ -10,6 +10,9 @@ using SixLabors.ImageSharp.Processing;
 
 namespace LendingAPI.Controllers
 {
+    /// <summary>
+    /// Контроллер для импорта новостей из группы ВКонтакте.
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     [Authorize(Roles = "Admin")]
@@ -18,14 +21,40 @@ namespace LendingAPI.Controllers
         private readonly VkService _vkService;
         private readonly ApplicationDbContext _context;
         private readonly ILogger<VkImportController> _logger;
-
+        /// <summary>
+        /// Конструктор контроллера импорта из VK.
+        /// </summary>
+        /// <param name="vkService">Сервис для работы с VK API.</param>
+        /// <param name="context">Контекст базы данных.</param>
+        /// <param name="logger">Логгер.</param>
         public VkImportController(VkService vkService, ApplicationDbContext context, ILogger<VkImportController> logger)
         {
             _vkService = vkService;
             _context = context;
             _logger = logger;
         }
+        // <summary>
+        /// Импортирует последние посты из группы VK.
+        /// </summary>
+        /// <remarks>
+        /// Импортирует до 5 последних постов из VK-группы, исключая уже импортированные посты с таким же заголовком.
+        /// Также загружает изображения, масштабируя их в соответствии с заданным размером.
+        /// </remarks>
+        /// <param name="preferredSize">
+        /// Желаемый размер изображений:
+        /// 0 = Original (Оригинальный размер), 
+        /// 1 = 512x380, 
+        /// 2 = 256x190.
+        /// </param>
+        /// <response code="200">Успешно импортировано. Возвращает количество импортированных постов.</response>
+        /// <response code="401">Неавторизованный доступ.</response>
+        /// <response code="403">Доступ запрещен (нужна роль администратора).</response>
+        /// <response code="500">Внутренняя ошибка сервера при обработке запроса.</response>
         [HttpPost("import")]
+        [ProducesResponseType(typeof(object), 200)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(500)]
         public async Task<IActionResult> ImportVkPosts([FromQuery] ImageSize preferredSize = ImageSize.Size_512x380)
         {
             var posts = await _vkService.GetGroupPostsAsync(count: 5);

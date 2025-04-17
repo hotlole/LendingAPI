@@ -3,7 +3,9 @@ using Landing.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-
+/// <summary>
+/// Контроллер для генерации административных отчетов.
+/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 [Authorize(Roles = "Admin")]
@@ -16,7 +18,24 @@ public class AdminReportsController : ControllerBase
         _context = context;
     }
 
+    /// <summary>
+    /// Генерирует Excel-отчет за указанный месяц.
+    /// </summary>
+    /// <remarks>
+    /// Создает Excel-файл с двумя листами:
+    /// - "Пользователи": содержит ФИО, email, дату рождения и начисленные баллы за указанный месяц.
+    /// - "Посещения": таблица, где строки — это мероприятия, а столбцы — пользователи. В ячейке "+" если пользователь посетил мероприятие.
+    /// </remarks>
+    /// <param name="month">Месяц (1-12), за который нужен отчет.</param>
+    /// <param name="year">Год, за который нужен отчет.</param>
+    /// <returns>Файл Excel с данными отчета.</returns>
+    /// <response code="200">Успешная генерация и возврат Excel-файла.</response>
+    /// <response code="401">Пользователь не авторизован.</response>
+    /// <response code="403">Доступ запрещён. Необходима роль администратора.</response>
     [HttpGet("monthly-report")]
+    [ProducesResponseType(typeof(FileContentResult), 200)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(403)]
     public async Task<IActionResult> GenerateMonthlyReport([FromQuery] int month, [FromQuery] int year)
     {
         var users = await _context.Users
