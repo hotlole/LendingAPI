@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using Swashbuckle.AspNetCore.Annotations;
 
-namespace Landing.Application.DTOs
+namespace Landing.Application.DTOs.News
 {
     /// <summary>
     /// Модель для создания новостей.

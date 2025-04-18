@@ -1,6 +1,6 @@
-﻿namespace Landing.Application.DTOs
+﻿namespace Landing.Application.DTOs.News
 {
-    
+
     public class NewsDto
     {
         public int Id { get; set; }

@@ -1,9 +1,11 @@
 ﻿using AutoMapper;
 using Landing.Core.Models.News;
+using System.Text.Json;
+using NewsModel = Landing.Core.Models.News.News;
 
 namespace Landing.Application.DTOs
 {
-    [AutoMap(typeof(News))]
+    [AutoMap(typeof(NewsModel))]
     public class VkPostDto
     {
         public string Text { get; set; } = "";
@@ -20,5 +22,6 @@ namespace Landing.Application.DTOs
         // Внешняя ссылка (если в посте есть прикреплённая ссылка)
         public string? ExternalLink { get; set; }
         public string? LinkTitle { get; set; }
+        public JsonElement? AttachmentsRaw { get; set; } // сохраняем оригинальные вложения
     }
 }

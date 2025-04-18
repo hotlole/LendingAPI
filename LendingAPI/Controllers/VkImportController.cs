@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
+using System.Text.Json;
 
 namespace LendingAPI.Controllers
 {
@@ -62,17 +63,79 @@ namespace LendingAPI.Controllers
 
             foreach (var post in posts)
             {
-                if (string.IsNullOrWhiteSpace(post.Text))
+                // 💡 Пропускать, только если нет текста И вложений
+                if (string.IsNullOrWhiteSpace(post.Text) &&
+                    (post.AttachmentsRaw == null || !post.AttachmentsRaw.Value.EnumerateArray().Any()))
+                {
                     continue;
+                }
 
                 if (_context.News.Any(n => n.Title == post.Text))
                     continue;
 
-                var title = post.Text.Length > 100 ? post.Text[..100] + "..." : post.Text;
-                string? savedImagePath = null;
-                string? fileBase = null;
+                var title = string.IsNullOrWhiteSpace(post.Text) ? "Пост без текста" :
+                            post.Text.Length > 100 ? post.Text[..100] + "..." : post.Text;
 
-                // Сохраняем главное изображение
+                var news = new News
+                {
+                    Title = title,
+                    Description = post.Text,
+                    Content = post.Text,
+                    PublishedAt = post.PublishedAt,
+                    ImageUrl = null, // установим позже
+                    VideoUrl = post.VideoUrl,
+                    VideoPreviewUrl = post.VideoPreviewUrl,
+                    ExternalLink = post.ExternalLink,
+                    LinkTitle = post.LinkTitle,
+                    AdditionalImages = new List<NewsImage>()
+                };
+
+                // 🔁 Обход вложений напрямую (attachments raw)
+                if (post.AttachmentsRaw != null)
+                {
+                    foreach (var attachment in post.AttachmentsRaw.Value.EnumerateArray())
+                    {
+                        if (!attachment.TryGetProperty("type", out var typeProp)) continue;
+                        var type = typeProp.GetString();
+
+                        if (type == "video" && attachment.TryGetProperty("video", out var video))
+                        {
+                            // Превью из video.image
+                            if (video.TryGetProperty("image", out var images))
+                            {
+                                var bestPreview = images.EnumerateArray()
+                                    .OrderByDescending(i => i.GetProperty("width").GetInt32() * i.GetProperty("height").GetInt32())
+                                    .FirstOrDefault();
+
+                                if (bestPreview.ValueKind != JsonValueKind.Undefined &&
+                                    bestPreview.TryGetProperty("url", out var previewUrl))
+                                {
+                                    news.AdditionalImages.Add(new NewsImage
+                                    {
+                                        Url = previewUrl.GetString()!
+                                    });
+                                }
+                            }
+
+                            // Video URL (если нет — составим вручную)
+                            if (string.IsNullOrEmpty(news.VideoUrl))
+                            {
+                                var vid = video.TryGetProperty("id", out var videoIdProp) ? videoIdProp.GetInt32() : 0;
+                                var oid = video.TryGetProperty("owner_id", out var ownerIdProp) ? ownerIdProp.GetInt32() : 0;
+                                var accessKey = video.TryGetProperty("access_key", out var keyProp) ? keyProp.GetString() : null;
+
+                                if (vid != 0 && oid != 0)
+                                {
+                                    news.VideoUrl = $"https://vk.com/video{oid}_{vid}" +
+                                        (string.IsNullOrEmpty(accessKey) ? "" : $"?access_key={accessKey}");
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // ⏬ Главное изображение сохраняем в файловую систему, если есть
+                string? fileBase = null;
                 if (!string.IsNullOrWhiteSpace(post.ImageUrl))
                 {
                     try
@@ -92,7 +155,7 @@ namespace LendingAPI.Controllers
                             image.Mutate(x => x.Resize(dimensions.Value.width, dimensions.Value.height));
 
                         await image.SaveAsJpegAsync(filePath);
-                        savedImagePath = Path.Combine("images/news", $"{fileBase}_{suffix}.jpg").Replace("\\", "/");
+                        news.ImageUrl = Path.Combine("images/news", $"{fileBase}_{suffix}.jpg").Replace("\\", "/");
                     }
                     catch (Exception ex)
                     {
@@ -100,24 +163,10 @@ namespace LendingAPI.Controllers
                     }
                 }
 
-                var news = new News
-                {
-                    Title = title,
-                    Description = post.Text,
-                    Content = post.Text,
-                    PublishedAt = post.PublishedAt,
-                    ImageUrl = savedImagePath,
-                    VideoUrl = post.VideoUrl,
-                    VideoPreviewUrl = post.VideoPreviewUrl,
-                    ExternalLink = post.ExternalLink,
-                    LinkTitle = post.LinkTitle,
-                    AdditionalImages = new List<NewsImage>()
-                };
-
-                // Сохраняем дополнительные изображения
+                // ➕ Добавляем остальные изображения (кроме первого)
                 if (post.AdditionalImages != null && post.AdditionalImages.Count > 1)
                 {
-                    foreach (var imageUrl in post.AdditionalImages.Skip(1)) // первую мы уже сохранили
+                    foreach (var imageUrl in post.AdditionalImages.Skip(1))
                     {
                         news.AdditionalImages.Add(new NewsImage
                         {
@@ -130,6 +179,7 @@ namespace LendingAPI.Controllers
                 _logger.LogInformation("Импортирован пост: {Title}", title);
                 imported++;
             }
+
 
             await _context.SaveChangesAsync();
 

@@ -85,6 +85,7 @@ builder.Services.AddHostedService<BackgroundTasksService>();
 builder.Services.AddHttpClient<VkService>();
 
 builder.Services.AddAutoMapper(typeof(EventProfile));
+builder.Services.AddAutoMapper(typeof(NewsProfile).Assembly);
 builder.Services.AddAuthorization();
 builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
 builder.Services.AddScoped<IEmailService, EmailService>();

@@ -61,7 +61,7 @@ public class VkService
                 Directory.CreateDirectory(logDir);
                 var logPath = Path.Combine(logDir, $"vk_attachments_{postId}.json");
                 File.WriteAllText(logPath, attachments.ToString());
-
+                post.AttachmentsRaw = attachments;
                 foreach (var attachment in attachments.EnumerateArray())
                 {
                     if (!attachment.TryGetProperty("type", out var typeProp)) continue;

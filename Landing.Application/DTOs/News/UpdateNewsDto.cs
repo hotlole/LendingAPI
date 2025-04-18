@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System.ComponentModel.DataAnnotations;
 
-namespace Landing.Application.DTOs
+namespace Landing.Application.DTOs.News
 {
     /// <summary>
     /// DTO для обновления новости.
