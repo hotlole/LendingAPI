@@ -14,6 +14,8 @@ using Landing.Application.Interfaces;
 using Microsoft.AspNetCore.Identity.Data;
 using System.Security.Cryptography;
 using Landing.Core.Models.Users;
+using DocumentFormat.OpenXml.Spreadsheet;
+using System.Web;
 
 namespace LandingAPI.Controllers
 {
@@ -27,7 +29,8 @@ namespace LandingAPI.Controllers
         private readonly IConfiguration _configuration;
         private readonly ApplicationDbContext _context;
         private readonly UserRepository _userRepository;
-        
+        private readonly IEmailService _emailService;
+
 
 
         /// <summary>
@@ -36,12 +39,14 @@ namespace LandingAPI.Controllers
         /// <param name="configuration">Конфигурация приложения</param>
         /// <param name="context">Контекст базы данных</param>
         /// <param name="userRepository">Репозиторий пользователей</param>
-        public AuthController(IConfiguration configuration, ApplicationDbContext context, UserRepository userRepository)
+        public AuthController(IConfiguration configuration, ApplicationDbContext context, UserRepository userRepository, IEmailService emailService)
         {
             _configuration = configuration;
             _context = context;
             _userRepository = userRepository;
+            _emailService = emailService;
         }
+
         /// <summary>
         /// Авторизация пользователя.
         /// </summary>
@@ -109,14 +114,33 @@ namespace LandingAPI.Controllers
             {
                 Email = request.Email,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-                BirthDate = request.BirthDate, 
+                BirthDate = request.BirthDate,
+                IsEmailConfirmed = false
             };
 
             _context.Users.Add(newUser);
             await _context.SaveChangesAsync();
 
+            // Создание токена подтверждения
+            var token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
+            var emailToken = new EmailConfirmationToken
+            {
+                Token = token,
+                UserId = newUser.Id,
+                Expires = DateTime.UtcNow.AddHours(24)
+            };
+            _context.EmailConfirmationTokens.Add(emailToken);
+            await _context.SaveChangesAsync();
+
+            // Отправка письма
+            var confirmationLink = $"https://yourdomain.com/api/auth/confirm-email?userId={newUser.Id}&token={HttpUtility.UrlEncode(token)}";
+
+            await _emailService.SendEmailConfirmationAsync(newUser.Email, confirmationLink);
+
+
             return Ok("Пользователь зарегистрирован. Подтвердите email по ссылке в письме.");
         }
+
 
         /// <summary>
         /// Генерация JWT-токена.

@@ -32,6 +32,7 @@ namespace Landing.Infrastructure.Data
         public DbSet<EventAttendance> EventAttendances { get; set; }
         public DbSet<UserPointsTransaction> UserPointsTransactions { get; set; } = null!;
         public DbSet<NewsImage> NewsImages { get; set; }
+        public DbSet<EmailConfirmationToken> EmailConfirmationTokens { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
