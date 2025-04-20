@@ -72,25 +72,29 @@ public class EventService
     }
 
     public async Task UpdateAsync(Event eventItem) => await _eventRepository.UpdateAsync(eventItem);
-
     public async Task DeleteAsync(int id) => await _eventRepository.DeleteAsync(id);
     public async Task<Event> CreateAsync(CreateEventDto dto)
     {
         Event eventItem = dto.Type switch
         {
-            EventType.Regular => _mapper.Map<RegularEvent>(dto), // добавим этот класс
+            EventType.Regular => _mapper.Map<RegularEvent>(dto),
             EventType.Curated => _mapper.Map<CuratedEvent>(dto),
             EventType.Offline => CreateOfflineEvent(dto),
             _ => throw new ArgumentException("Некорректный тип мероприятия.")
         };
 
-
-        if (eventItem is CuratedEvent curated && dto.CuratorIds != null)
+        // Если это курируемое мероприятие, добавляем кураторов
+        if (eventItem is CuratedEvent curatedEvent && dto.CuratorIds is { Count: > 0 })
         {
-            var curators = await _context.Users.Where(u => dto.CuratorIds.Contains(u.Id)).ToListAsync();
-            curated.Curators = curators;
+            var curatorEntities = await _userRepository.GetUsersByIdsAsync(dto.CuratorIds);
+            if (curatedEvent.Curators is not List<User> curatorsList)
+            {
+                curatedEvent.Curators = curatedEvent.Curators?.ToList() ?? new List<User>();
+                curatorsList = (List<User>)curatedEvent.Curators;
+            }
+            curatorsList.AddRange(curatorEntities);
         }
-
+        // Сохраняем мероприятие
         await _eventRepository.AddAsync(eventItem);
         return eventItem;
     }
@@ -170,7 +174,11 @@ public class EventService
 
     public async Task AssignCuratorAsync(int eventId, int userId)
     {
-        var eventItem = await _eventRepository.GetByIdAsync(eventId) as CuratedEvent;
+        var eventItem = await _context.Events
+            .OfType<CuratedEvent>()
+            .Include(e => e.Curators)
+            .FirstOrDefaultAsync(e => e.Id == eventId);
+
         if (eventItem == null)
             throw new Exception("Мероприятие не найдено или не является курируемым.");
 
@@ -181,9 +189,11 @@ public class EventService
         if (!eventItem.Curators.Any(c => c.Id == user.Id))
         {
             eventItem.Curators.Add(user);
-            await _eventRepository.UpdateAsync(eventItem);
+            await _context.SaveChangesAsync();
         }
     }
+
+
 
     public async Task<string?> GetHtmlTemplateAsync(int eventId)
     {

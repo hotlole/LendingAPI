@@ -6,7 +6,13 @@ using System.Threading.Tasks;
 
 namespace Landing.Application.DTOs.Events
 {
-    internal class CuratedEventDto
+    public class CuratedEventDto
     {
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public DateTime Date { get; set; }
+        public string ImagePath { get; set; } = string.Empty;
+        public List<int> CuratorIds { get; set; } = new();
     }
+
 }

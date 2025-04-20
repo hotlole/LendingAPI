@@ -1,7 +1,7 @@
 ﻿version: '3.8'
 
 services:
-  api: # Ваше .NET-приложение
+  api: 
     image: lending-api
     build: .
     ports:

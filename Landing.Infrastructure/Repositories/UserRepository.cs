@@ -42,6 +42,11 @@ namespace Landing.Infrastructure.Repositories
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
         }
+        public async Task<List<User>> GetUsersByIdsAsync(List<int> userIds)
+        {
+            return await _context.Users.Where(u => userIds.Contains(u.Id)).ToListAsync();
+        }
+
     }
 
 }

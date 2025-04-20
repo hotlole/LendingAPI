@@ -33,7 +33,7 @@ namespace Landing.Infrastructure.Data
         public DbSet<UserPointsTransaction> UserPointsTransactions { get; set; } = null!;
         public DbSet<NewsImage> NewsImages { get; set; }
         public DbSet<EmailConfirmationToken> EmailConfirmationTokens { get; set; }
-
+       
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<User>()
@@ -54,7 +54,7 @@ namespace Landing.Infrastructure.Data
                 "[LastName] + ' ' + [FirstName] + CASE WHEN [MiddleName] IS NOT NULL AND " +
                 "[MiddleName] != '' THEN ' ' + [MiddleName] ELSE '' END",
                 stored: true);
-
+       
             modelBuilder.ApplyConfiguration(new EventConfiguration());
             modelBuilder.ApplyConfiguration(new OfflineEventConfiguration());
             modelBuilder.ApplyConfiguration(new EventAttendanceConfiguration());

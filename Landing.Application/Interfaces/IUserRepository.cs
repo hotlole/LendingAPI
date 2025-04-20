@@ -6,5 +6,6 @@ namespace Landing.Application.Interfaces
     {
         Task<User?> GetByIdAsync(int userId);
         Task UpdateAsync(User user);
+        Task<List<User>> GetUsersByIdsAsync(List<int> userIds);
     }
 }

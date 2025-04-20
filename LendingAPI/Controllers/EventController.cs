@@ -170,7 +170,32 @@ namespace Landing.API.Controllers
 
             return Ok(template);
         }
-
+        /// <summary>
+        /// Назначает пользователя куратором мероприятия.
+        /// </summary>
+        /// <param name="eventId">Идентификатор мероприятия.</param>
+        /// <param name="userId">Идентификатор пользователя, которого нужно назначить куратором.</param>
+        /// <response code="200">Куратор успешно назначен на мероприятие.</response>
+        /// <response code="400">Ошибка: если мероприятие или пользователь не найдены, или если произошла другая ошибка.</response>
+        [HttpPost("assign-curator")]
+        [SwaggerOperation(
+            Summary = "Назначить пользователя куратором мероприятия",
+            Description = "Позволяет назначить пользователя куратором мероприятия по его ID."
+        )]
+        [SwaggerResponse(200, "Куратор успешно назначен на мероприятие.")]
+        [SwaggerResponse(400, "Ошибка: мероприятие или пользователь не найдены, или ошибка при выполнении операции.")]
+        public async Task<IActionResult> AssignCurator([FromQuery] int eventId, [FromQuery] int userId)
+        {
+            try
+            {
+                await _eventService.AssignCuratorAsync(eventId, userId);
+                return Ok("Куратор успешно назначен на мероприятие.");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Ошибка: {ex.Message}");
+            }
+        }
 
     }
 }
