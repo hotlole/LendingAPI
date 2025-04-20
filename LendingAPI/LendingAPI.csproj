@@ -5,7 +5,6 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>ba562312-e810-4d04-a084-a2e4b99f868b</UserSecretsId>
-    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
 	<GenerateDocumentationFile>true</GenerateDocumentationFile>
 	<NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
@@ -43,5 +42,13 @@
 	<ItemGroup>
     <Folder Include="wwwroot\uploads\" />
   </ItemGroup>
+
+	<ItemGroup>
+	  <EditorConfigFiles Remove="C:\Users\Данила\source\repos\LendingAPI\LendingAPI\.editorconfig" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Include="C:\Users\Данила\source\repos\LendingAPI\LendingAPI\.editorconfig" />
+	</ItemGroup>
 
 </Project>

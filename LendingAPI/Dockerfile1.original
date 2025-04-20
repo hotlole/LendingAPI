@@ -10,9 +10,6 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["LendingAPI/LendingAPI.csproj", "LendingAPI/"]
-COPY ["Landing.Application/Landing.Application.csproj", "Landing.Application/"]
-COPY ["Landing.Core/Landing.Core.csproj", "Landing.Core/"]
-COPY ["Landing.Infrastructure/Landing.Infrastructure.csproj", "Landing.Infrastructure/"]
 RUN dotnet restore "./LendingAPI/LendingAPI.csproj"
 COPY . .
 WORKDIR "/src/LendingAPI"

@@ -1,0 +1,27 @@
+﻿version: '3.8'
+
+services:
+  api: # Ваше .NET-приложение
+    image: lending-api
+    build: .
+    ports:
+      - "5164:5164" # Проброс порта
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=LandingDB;Username=postgres;Password=123456
+    depends_on:
+      - postgres
+
+  postgres: # Контейнер PostgreSQL
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: LandingDB
+    ports:
+      - "5432:5432" # Проброс порта для доступа с хоста (опционально)
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data: # Постоянное хранилище данных PostgreSQL

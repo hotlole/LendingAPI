@@ -67,7 +67,11 @@ public class AdminReportsController : ControllerBase
                 .Where(p => p.CreatedAt.Month == month && p.CreatedAt.Year == year)
                 .Sum(p => p.Points);
 
-            sheet1.Cell(row, 1).Value = user.FullName;
+            var fullName = !string.IsNullOrWhiteSpace(user.FullName)
+                ? user.FullName
+                : $"{user.LastName} {user.FirstName} {(string.IsNullOrWhiteSpace(user.MiddleName) 
+                ? "" : user.MiddleName)}".Trim();
+            sheet1.Cell(row, 1).Value = fullName;
             sheet1.Cell(row, 2).Value = user.Email;
             sheet1.Cell(row, 3).Value = user.BirthDate?.ToShortDateString();
             sheet1.Cell(row, 4).Value = monthlyPoints;
@@ -84,8 +88,14 @@ public class AdminReportsController : ControllerBase
 
         for (int i = 0; i < users.Count; i++)
         {
-            sheet2.Cell(1, i + 2).Value = users[i].FullName;
+            var user = users[i];
+            var fullName = !string.IsNullOrWhiteSpace(user.FullName)
+                ? user.FullName
+                : $"{user.LastName} {user.FirstName} {(string.IsNullOrWhiteSpace(user.MiddleName) ? "" : user.MiddleName)}".Trim();
+
+            sheet2.Cell(1, i + 2).Value = fullName;
         }
+
 
         var header2 = sheet2.Range(1, 1, 1, users.Count + 1);
         header2.Style.Font.Bold = true;
@@ -102,12 +112,18 @@ public class AdminReportsController : ControllerBase
                 var user = users[j];
                 var attendance = user.Attendances.FirstOrDefault(a => a.EventId == ev.Id);
 
+                var cell = sheet2.Cell(i + 2, j + 2);
                 if (attendance != null && attendance.IsConfirmed)
                 {
-                    var cell = sheet2.Cell(i + 2, j + 2);
                     cell.Value = "+";
                     cell.Style.Fill.BackgroundColor = XLColor.LightGreen;
                 }
+                else
+                {
+                    cell.Value = "-";
+                    cell.Style.Fill.BackgroundColor = XLColor.LightPink;
+                }
+
             }
         }
 

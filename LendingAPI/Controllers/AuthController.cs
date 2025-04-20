@@ -112,6 +112,9 @@ namespace LandingAPI.Controllers
 
             var newUser = new User
             {
+                FirstName = request.FirstName,
+                LastName = request.LastName,
+                MiddleName = request.MiddleName,
                 Email = request.Email,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
                 BirthDate = request.BirthDate,
@@ -245,6 +248,17 @@ namespace LandingAPI.Controllers
     /// </summary>
     public class RegisterRequest
     {
+        [Required]
+        [MaxLength(100)]
+        public string FirstName { get; set; } = string.Empty;
+
+        [Required]
+        [MaxLength(100)]
+        public string LastName { get; set; } = string.Empty;
+
+        [MaxLength(100)]
+        public string? MiddleName { get; set; }
+
         [Required(ErrorMessage = "Email обязателен")]
         [EmailAddress(ErrorMessage = "Некорректный email")]
         public string Email { get; set; }

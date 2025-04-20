@@ -36,13 +36,25 @@ namespace Landing.Infrastructure.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<User>()
+                .Property(u => u.Points)
+                .HasComputedColumnSql("(SELECT ISNULL(SUM(Points), 0) " +
+                "FROM UserPointsTransactions WHERE UserId = Id)", stored: true);
+
             base.OnModelCreating(modelBuilder);
             modelBuilder.Entity<NewsImage>()
                 .HasOne(i => i.News)
                 .WithMany(n => n.AdditionalImages)
                 .HasForeignKey(i => i.NewsId)
                 .OnDelete(DeleteBehavior.Cascade);
-                
+
+            modelBuilder.Entity<User>()
+                .Property(u => u.FullName)
+                .HasComputedColumnSql(
+                "[LastName] + ' ' + [FirstName] + CASE WHEN [MiddleName] IS NOT NULL AND " +
+                "[MiddleName] != '' THEN ' ' + [MiddleName] ELSE '' END",
+                stored: true);
+
             modelBuilder.ApplyConfiguration(new EventConfiguration());
             modelBuilder.ApplyConfiguration(new OfflineEventConfiguration());
             modelBuilder.ApplyConfiguration(new EventAttendanceConfiguration());

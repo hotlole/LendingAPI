@@ -155,8 +155,18 @@ public class EventService
         attendance.PointsAwarded = points;
         attendance.ConfirmedAt = DateTime.UtcNow;
 
+        _context.UserPointsTransactions.Add(new UserPointsTransaction
+        {
+            UserId = userId,
+            Points = points,
+            Description = $"Начисление за участие в мероприятии #{eventId}",
+            CreatedAt = DateTime.UtcNow
+        });
+
         await _context.SaveChangesAsync();
     }
+
+
 
     public async Task AssignCuratorAsync(int eventId, int userId)
     {
