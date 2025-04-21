@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Landing.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250420174510_MakeFullNameStored")]
-    partial class MakeFullNameStored
+    [Migration("20250421110158_AddFullNameComputedColumn")]
+    partial class AddFullNameComputedColumn
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -236,7 +236,8 @@ namespace Landing.Infrastructure.Migrations
                         .IsRequired()
                         .ValueGeneratedOnAddOrUpdate()
                         .HasMaxLength(300)
-                        .HasColumnType("character varying(300)");
+                        .HasColumnType("character varying(300)")
+                        .HasComputedColumnSql("\r\n                    \"LastName\" || ' ' || \"FirstName\" || \r\n                    CASE \r\n                        WHEN \"MiddleName\" IS NOT NULL AND \"MiddleName\" != ''\r\n                        THEN ' ' || \"MiddleName\"\r\n                        ELSE ''\r\n                    END", true);
 
                     b.Property<bool>("IsEmailConfirmed")
                         .HasColumnType("boolean");
@@ -257,7 +258,7 @@ namespace Landing.Infrastructure.Migrations
                     b.Property<int>("Points")
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("integer")
-                        .HasComputedColumnSql("(SELECT ISNULL(SUM(Value), 0) FROM UserPointsTransactions WHERE UserId = Id)", true);
+                        .HasComputedColumnSql("\r\n                    calculate_user_points(\"Id\")", true);
 
                     b.HasKey("Id");
 

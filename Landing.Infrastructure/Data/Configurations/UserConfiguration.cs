@@ -14,12 +14,29 @@ namespace Landing.Infrastructure.Data.Configurations
                 .HasConversion(
                     v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
                     v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null
+
                 );
-            builder.Property(u => u.Points)
+            // Используем функцию для вычисления суммы баллов
+            builder
+                .Property(u => u.Points)
                 .HasComputedColumnSql(
-                "(SELECT ISNULL(SUM(Value), 0) FROM UserPointsTransactions WHERE UserId = Id)",
-                stored: true
-                );  
+                    @"
+                    calculate_user_points(""Id"")",
+                    stored: true
+                );
+
+            builder
+               .Property(u => u.FullName)
+               .HasComputedColumnSql(
+                   @"
+                    ""LastName"" || ' ' || ""FirstName"" || 
+                    CASE 
+                        WHEN ""MiddleName"" IS NOT NULL AND ""MiddleName"" != ''
+                        THEN ' ' || ""MiddleName""
+                        ELSE ''
+                    END",
+                   stored: true
+               );
         }
     }
 }

@@ -10,7 +10,7 @@ namespace Landing.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<string>(
+            /*migrationBuilder.AddColumn<string>(
                 name: "FirstName",
                 table: "Users",
                 type: "character varying(100)",
@@ -32,13 +32,13 @@ namespace Landing.Infrastructure.Migrations
                 type: "character varying(100)",
                 maxLength: 100,
                 nullable: false,
-                defaultValue: "");
+                defaultValue: "");*/
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
+            /*migrationBuilder.DropColumn(
                 name: "FirstName",
                 table: "Users");
 
@@ -48,7 +48,7 @@ namespace Landing.Infrastructure.Migrations
 
             migrationBuilder.DropColumn(
                 name: "MiddleName",
-                table: "Users");
+                table: "Users");*/
         }
     }
 }
