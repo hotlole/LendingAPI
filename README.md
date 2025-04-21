@@ -17,7 +17,7 @@
 ---
 ## 🗺 Архитектура проекта
 
-![Архитектура проекта](./LendingAPI/docs/architecture.svg)
+<img src="./LendingAPI/docs/architecture.svg" width="800"/>
 
 
 
