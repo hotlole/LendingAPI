@@ -3,20 +3,16 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.Extensions.Configuration;
 using Landing.Infrastructure.Data;
-using Landing.Infrastructure.Services;
 using Landing.Core.Models;
 using Landing.Infrastructure.Repositories;
-using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using Landing.Application.Interfaces;
-using Microsoft.AspNetCore.Identity.Data;
 using System.Security.Cryptography;
 using Landing.Core.Models.Users;
-using DocumentFormat.OpenXml.Spreadsheet;
 using System.Web;
-
+using Landing.Application.Validators;
+using System.Globalization;
 namespace LandingAPI.Controllers
 {
     /// <summary>
@@ -110,6 +106,7 @@ namespace LandingAPI.Controllers
             if (existingUser != null)
                 return BadRequest("Пользователь с таким email уже существует");
 
+            string birthDateString = request.BirthDate?.ToString("yyyy-MM-dd");
             var newUser = new User
             {
                 FirstName = request.FirstName,
@@ -117,9 +114,12 @@ namespace LandingAPI.Controllers
                 MiddleName = request.MiddleName,
                 Email = request.Email,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-                BirthDate = request.BirthDate,
+                BirthDate = DateTime.TryParseExact(birthDateString, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate)
+        ? parsedDate
+        : (DateTime?)null,
                 IsEmailConfirmed = false
-            };
+            }; 
+
 
             _context.Users.Add(newUser);
             await _context.SaveChangesAsync();
@@ -235,49 +235,5 @@ namespace LandingAPI.Controllers
             };
         }
     }
-    /// <summary>
-    /// Запрос на авторизацию.
-    /// </summary>
-    public class LoginRequest
-    {
-        public string Email { get; set; }
-        public string Password { get; set; }
-    }
-    /// <summary>
-    /// Запрос на регистрацию.
-    /// </summary>
-    public class RegisterRequest
-    {
-        [Required]
-        [MaxLength(100)]
-        public string FirstName { get; set; } = string.Empty;
-
-        [Required]
-        [MaxLength(100)]
-        public string LastName { get; set; } = string.Empty;
-
-        [MaxLength(100)]
-        public string? MiddleName { get; set; }
-
-        [Required(ErrorMessage = "Email обязателен")]
-        [EmailAddress(ErrorMessage = "Некорректный email")]
-        public string Email { get; set; }
-
-        [Required(ErrorMessage = "Пароль обязателен")]
-        [MinLength(6, ErrorMessage = "Пароль должен содержать минимум 6 символов")]
-        public string Password { get; set; }
-
-        [Required(ErrorMessage = "Дата рождения обязательна")]
-        [DataType(DataType.Date)]
-        [Range(typeof(DateTime), "1900-01-01", "2100-01-01", ErrorMessage = "Некорректная дата рождения")]
-        public DateTime BirthDate { get; set; }
-    }
-    /// <summary>
-    /// Запрос на обновление Refresh-токена.
-    /// </summary>
-    public class RefreshRequest
-    {
-        [Required]
-        public string RefreshToken { get; set; } = string.Empty;
-    }
+    
 }

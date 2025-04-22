@@ -16,6 +16,10 @@ using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using Landing.Application.Mappings;
+using FluentValidation.AspNetCore;
+using FluentValidation;
+using Landing.Application.Validators;
+using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,8 +38,29 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
            .EnableSensitiveDataLogging()  // Включает вывод данных в логи
            .LogTo(Console.WriteLine, LogLevel.Information));  // Логирует запросы к БД
- 
+// Fluent Validation
+builder.Services
+   .AddFluentValidationAutoValidation()
+   .AddFluentValidationClientsideAdapters();
+builder.Services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var errors = context.ModelState
+            .Where(e => e.Value.Errors.Count > 0)
+            .ToDictionary(
+                kvp => kvp.Key,
+                kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+            );
 
+        return new BadRequestObjectResult(new
+        {
+            message = "Ошибка валидации",
+            errors
+        });
+    };
+});
 builder.Services.AddScoped<UserRepository>();
 
 // Настройка Serilog
