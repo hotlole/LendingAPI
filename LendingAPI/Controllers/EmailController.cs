@@ -1,5 +1,4 @@
-﻿using DocumentFormat.OpenXml.InkML;
-using Landing.Application.Interfaces;
+﻿using Landing.Application.Interfaces;
 using Landing.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -21,35 +20,53 @@ namespace LendingAPI.Controllers
         }
 
         /// <summary>
-        /// Отправка письма для подтверждения email.
+        /// Подтверждение email по ссылке из письма.
         /// </summary>
-        /// <param name="email">Адрес электронной почты получателя.</param>
-        /// <param name="confirmationLink">Ссылка для подтверждения.</param>
-        /// <returns>Результат операции.</returns>
-        /// <response code="200">Письмо успешно отправлено.</response>
-        /// <response code="500">Ошибка при отправке письма.</response>
-        [HttpPost("send-confirmation")]
-        [SwaggerOperation(Summary = "Отправка письма для подтверждения email.")]
-        [SwaggerResponse(200, "Письмо успешно отправлено.")]
-        [SwaggerResponse(500, "Ошибка при отправке письма.")]
+        /// <param name="userId">ID пользователя.</param>
+        /// <param name="token">Токен подтверждения.</param>
+        /// <returns>HTML-страница с результатом.</returns>
+        [HttpGet("confirm-email")]
+        [SwaggerOperation(Summary = "Подтверждение email по токену.")]
+        [ProducesResponseType(200)]
         public async Task<IActionResult> ConfirmEmail([FromQuery] int userId, [FromQuery] string token)
         {
             var confirmation = await _context.EmailConfirmationTokens
                 .FirstOrDefaultAsync(c => c.UserId == userId && c.Token == token && c.Expires > DateTime.UtcNow);
 
             if (confirmation == null)
-                return BadRequest("Недействительный или просроченный токен.");
+                return HtmlResponse("Ошибка подтверждения", "Ссылка недействительна или срок действия токена истёк.", isSuccess: false);
 
             var user = await _context.Users.FindAsync(userId);
             if (user == null)
-                return NotFound("Пользователь не найден.");
+                return HtmlResponse("Пользователь не найден", "Пользователь с указанным ID не существует.", isSuccess: false);
 
             user.IsEmailConfirmed = true;
             _context.EmailConfirmationTokens.Remove(confirmation);
-
             await _context.SaveChangesAsync();
 
-            return Ok("Email успешно подтвержден.");
+            return HtmlResponse("Email подтверждён!", "Теперь вы можете войти в систему.", isSuccess: true);
+        }
+
+        // Вспомогательный метод для генерации HTML-ответов
+        private ContentResult HtmlResponse(string title, string message, bool isSuccess)
+        {
+            var bgColor = isSuccess ? "#e0ffe0" : "#ffe5e5";
+            var textColor = isSuccess ? "#007e33" : "#b00020";
+
+            var html = $@"
+<!DOCTYPE html>
+<html lang=""ru"">
+<head>
+    <meta charset=""UTF-8"">
+    <title>{title}</title>
+</head>
+<body style=""font-family: sans-serif; background-color: {bgColor}; color: {textColor}; padding: 30px;"">
+    <h1>{title}</h1>
+    <p>{message}</p>
+</body>
+</html>";
+
+            return Content(html, "text/html");
         }
     }
 }

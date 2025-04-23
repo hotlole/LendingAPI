@@ -136,11 +136,8 @@ namespace LandingAPI.Controllers
             await _context.SaveChangesAsync();
 
             // Отправка письма
-            var confirmationLink = $"https://yourdomain.com/api/auth/confirm-email?userId={newUser.Id}&token={HttpUtility.UrlEncode(token)}";
-
+            var confirmationLink = $"http://localhost:5164/api/email/confirm-email?userId={newUser.Id}&token={HttpUtility.UrlEncode(token)}";
             await _emailService.SendEmailConfirmationAsync(newUser.Email, confirmationLink);
-
-
             return Ok("Пользователь зарегистрирован. Подтвердите email по ссылке в письме.");
         }
 
