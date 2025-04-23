@@ -13,6 +13,7 @@ using Landing.Core.Models.Users;
 using System.Web;
 using Landing.Application.Validators;
 using System.Globalization;
+using Microsoft.AspNetCore.Authorization;
 namespace LandingAPI.Controllers
 {
     /// <summary>
@@ -177,16 +178,17 @@ namespace LandingAPI.Controllers
         /// <param name="userId">Идентификатор пользователя</param>
         /// <param name="newRole">Новая роль</param>
         /// <returns>Результат операции</returns>
+        [Authorize(Roles = "Admin")]
         [HttpPost("change-role")]
         public async Task<IActionResult> ChangeUserRole([FromQuery] int userId, [FromQuery] string newRole)
         {
-            // Проверка прав: только администратор может менять роль
-            var currentUser = _context.Users.Include(u => u.UserRoles).ThenInclude(ur => ur.Role)
-                                            .FirstOrDefault(u => u.Email == User.Identity.Name); // Идентификатор текущего пользователя из токена
+            var email = User.FindFirstValue(ClaimTypes.Email);
+            var currentUser = await _context.Users
+                .Include(u => u.UserRoles).ThenInclude(ur => ur.Role)
+                .FirstOrDefaultAsync(u => u.Email == email);
+
             if (currentUser == null || !currentUser.UserRoles.Any(ur => ur.Role.Name == "Admin"))
-            {
                 return Unauthorized("У вас нет прав для изменения роли.");
-            }
 
             var user = await _context.Users.Include(u => u.UserRoles).ThenInclude(ur => ur.Role)
                                            .FirstOrDefaultAsync(u => u.Id == userId);
@@ -213,9 +215,9 @@ namespace LandingAPI.Controllers
             }
 
             await _context.SaveChangesAsync();
-
             return Ok("Роль пользователя изменена");
         }
+
         /// <summary>
         /// Генерация Refresh-токена для пользователя.
         /// </summary>
