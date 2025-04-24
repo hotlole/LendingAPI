@@ -81,7 +81,11 @@ namespace LandingAPI.Controllers
             if (storedToken == null || !storedToken.IsActive)
                 return Unauthorized("Недействительный или просроченный рефреш-токен.");
 
-            var user = await _context.Users.FindAsync(storedToken.UserId);
+            var user = await _context.Users
+                .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
+                .FirstOrDefaultAsync(u => u.Id == storedToken.UserId);
+
             if (user == null)
                 return Unauthorized("Пользователь не найден.");
 
@@ -95,6 +99,7 @@ namespace LandingAPI.Controllers
 
             return Ok(new { Token = newJwt, RefreshToken = newRefreshToken.Token });
         }
+
         /// <summary>
         /// Регистрация нового пользователя.
         /// </summary>
