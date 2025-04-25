@@ -14,6 +14,7 @@ using System.Web;
 using Landing.Application.Validators;
 using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 namespace LandingAPI.Controllers
 {
     /// <summary>
@@ -221,6 +222,34 @@ namespace LandingAPI.Controllers
 
             await _context.SaveChangesAsync();
             return Ok("Роль пользователя изменена");
+        }
+        /// <summary>
+        /// Смена пароля пользователя.
+        /// </summary>
+        [HttpPost("change-password")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+        {
+            // Проверка, что email подтверждён
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email && u.IsEmailConfirmed);
+            if (user == null)
+            {
+                return Unauthorized("Email не подтверждён.");
+            }
+
+            // Валидируем весь запрос с помощью Fluent Validation
+            var passwordValidator = new ChangePasswordRequestValidator();
+            var validationResult = passwordValidator.Validate(request);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage)));
+            }
+
+            // Хешируем новый пароль
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            await _context.SaveChangesAsync();
+
+            return Ok("Пароль успешно изменён.");
         }
 
         /// <summary>

@@ -14,7 +14,6 @@ using Serilog;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using Landing.Application.Mappings;
 using FluentValidation.AspNetCore;
 using FluentValidation;
@@ -80,10 +79,6 @@ builder.Services.AddAuthentication(options =>
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
 
-.AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
-{
-    options.LoginPath = "/admin/login";
-})
 .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
 {
     var jwtSettings = builder.Configuration.GetSection("JwtSettings");
@@ -160,11 +155,10 @@ app.UseStaticFiles();
 // Настраиваем Hangfire Dashboard с фильтром авторизации
 app.UseHangfireDashboard("/hangfire", new DashboardOptions
 {
-    Authorization = new[]
-    {
-        new HangfireAuthorizationFilter()
-    }
+    Authorization = new[] { new HangfireAuthorizationFilter(app.Configuration, app.Services) }
+
 });
+
 
 app.MapGet("/", () => "Hello World!");
 // Настраиваем задачи Hangfire
