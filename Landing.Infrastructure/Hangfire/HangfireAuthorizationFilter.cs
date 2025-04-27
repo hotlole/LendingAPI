@@ -11,52 +11,37 @@ using System.Text;
 
 namespace Landing.Core.Models
 {
-    public class HangfireAuthorizationFilter(IConfiguration config, IServiceProvider serviceProvider) : IDashboardAuthorizationFilter
+    public class HangfireAuthorizationFilter : IDashboardAuthorizationFilter
     {
-        private readonly IConfiguration _config = config;
-        private readonly IServiceProvider _serviceProvider = serviceProvider;
-
         public bool Authorize(DashboardContext context)
         {
             var httpContext = context.GetHttpContext();
-            var authHeader = httpContext.Request.Headers["Authorization"].ToString();
 
-            if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
-                return false;
+            var path = httpContext.Request.Path.Value;
 
-            var token = authHeader.Substring("Bearer ".Length).Trim();
-
-            try
+            // Разрешаем грузить CSS, JS, шрифты без авторизации
+            if (path != null && (
+                path.StartsWith("/hangfire/css") ||
+                path.StartsWith("/hangfire/js") ||
+                path.StartsWith("/hangfire/fonts")
+            ))
             {
-                var tokenHandler = new JwtSecurityTokenHandler();
-                var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
-                {
-                    ValidateIssuer = false,
-                    ValidateAudience = false,
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(_config["Jwt:Key"]!))
-                }, out _);
-
-                var userIdClaim = principal.FindFirst(ClaimTypes.NameIdentifier);
-                if (userIdClaim == null) return false;
-
-                using var scope = _serviceProvider.CreateScope();
-                var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
-                var user = db.Users
-                    .Include(u => u.UserRoles)
-                    .ThenInclude(ur => ur.Role)
-                    .FirstOrDefault(u => u.Id.ToString() == userIdClaim.Value);
-
-                return user?.UserRoles.Any(r => r.Role.Name == "Admin") == true;
+                return true;
             }
-            catch
+
+            // Проверяем наличие Bearer токена
+            var authHeader = httpContext.Request.Headers["Authorization"].FirstOrDefault();
+            if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer "))
             {
-                return false;
+                var token = authHeader.Substring("Bearer ".Length).Trim();
+
+                // Тут простая проверка — токен вообще передан
+                return !string.IsNullOrEmpty(token);
             }
+
+            return false;
         }
     }
 
 
-}
+    }

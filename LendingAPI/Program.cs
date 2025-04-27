@@ -1,53 +1,81 @@
 using Landing.Core.Models;
 using Landing.Infrastructure.Data;
 using Landing.Infrastructure.Repositories;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
+using Landing.Infrastructure.Services;
 using Landing.Application.Interfaces;
 using Landing.Application.Services;
-using System.Reflection;
-using Microsoft.OpenApi.Models;
-using Landing.Infrastructure.Services;
-using Serilog;
+using Landing.Application.Mappings;
+using Landing.Application.Validators;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Hangfire;
 using Hangfire.PostgreSql;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Landing.Application.Mappings;
-using FluentValidation.AspNetCore;
-using FluentValidation;
-using Landing.Application.Validators;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using Serilog;
+using System.Reflection;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Добавляем контроллеры
+// --- Конфигурация логгирования через Serilog ---
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .CreateLogger();
+
+builder.Host.UseSerilog();
+
+// --- Добавляем сервисы ---
 builder.Services.AddControllers()
     .AddNewtonsoftJson();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+
+// --- Swagger ---
+ConfigureSwagger(builder.Services);
+
+// --- Подключение к БД ---
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+           .EnableSensitiveDataLogging()
+           .LogTo(Console.WriteLine, LogLevel.Information));
+
+// --- Репозитории ---
 builder.Services.AddScoped<INewsRepository, NewsRepository>();
 builder.Services.AddScoped<IEventRepository, EventRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+// --- Сервисы ---
 builder.Services.AddScoped<NewsService>();
 builder.Services.AddScoped<EventService>();
 builder.Services.AddScoped<BackgroundTasksService>();
-// Настраиваем подключение к PostgreSQL
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
-           .EnableSensitiveDataLogging()  // Включает вывод данных в логи
-           .LogTo(Console.WriteLine, LogLevel.Information));  // Логирует запросы к БД
-// Fluent Validation
-builder.Services
-   .AddFluentValidationAutoValidation()
-   .AddFluentValidationClientsideAdapters();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IUserTransactionService, UserTransactionService>();
+builder.Services.AddScoped<FileCleanupService>();
+builder.Services.AddScoped<ImageCompressionService>();
+builder.Services.AddHttpClient<VkService>();
+
+// --- Автоматическое маппинг профилей ---
+builder.Services.AddAutoMapper(cfg =>
+{
+    cfg.AddProfile<EventProfile>();
+    cfg.AddProfile<NewsProfile>();
+}, Assembly.GetExecutingAssembly());
+
+// --- FluentValidation ---
+builder.Services.AddFluentValidationAutoValidation()
+                .AddFluentValidationClientsideAdapters();
 builder.Services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
+
+// --- Кастомизация ответа при ошибках валидации ---
 builder.Services.Configure<ApiBehaviorOptions>(options =>
 {
     options.InvalidModelStateResponseFactory = context =>
     {
         var errors = context.ModelState
-            .Where(e => e.Value.Errors.Count > 0)
+            .Where(e => e.Value.Errors.Any())
             .ToDictionary(
                 kvp => kvp.Key,
                 kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
@@ -60,71 +88,25 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
         });
     };
 });
-builder.Services.AddScoped<UserRepository>();
 
-// Настройка Serilog
-Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console()
-    .CreateLogger();
+// --- Аутентификация через JWT ---
+ConfigureAuthentication(builder.Services, builder.Configuration);
 
-builder.Host.UseSerilog();
-
-// Читаем настройки JWT
-var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var secretKey = Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]);
-// Настраиваем аутентификацию через JWT
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-
-.AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
-{
-    var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-    var secretKey = Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]);
-
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtSettings["Issuer"],
-        ValidAudience = jwtSettings["Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(secretKey)
-    };
-});
-
-// Добавляем Hangfire в контейнер сервисов
+// --- Hangfire ---
 builder.Services.AddHangfire(config =>
     config.UsePostgreSqlStorage(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddHangfireServer();
-builder.Services.AddSingleton<BackgroundTasksService>();
-builder.Services.AddHostedService<BackgroundTasksService>();
-builder.Services.AddHttpClient<VkService>();
 
-builder.Services.AddAutoMapper(typeof(EventProfile));
-builder.Services.AddAutoMapper(typeof(NewsProfile).Assembly);
+// --- Авторизация ---
 builder.Services.AddAuthorization();
-builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
-builder.Services.AddScoped<IEmailService, EmailService>();
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<ITokenService, TokenService>();
-builder.Services.AddScoped<IUserTransactionService, UserTransactionService>();
-builder.Services.AddScoped<FileCleanupService>();
-builder.Services.AddScoped<ImageCompressionService>();
-
-
-
-
-ConfigureDevelopmentServices(builder.Services);
 
 var app = builder.Build();
+
+// --- Инициализация базы данных ---
 using (var scope = app.Services.CreateScope())
 {
-    
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
     if (!context.Roles.Any())
     {
         context.Roles.AddRange(new List<Role>
@@ -136,9 +118,20 @@ using (var scope = app.Services.CreateScope())
 
         context.SaveChanges();
     }
-    
+
     await AdminSeeder.SeedAdminAsync(context);
 }
+
+// --- Middleware ---
+app.Use(async (context, next) =>
+{
+    var token = context.Request.Query["access_token"].FirstOrDefault();
+    if (!string.IsNullOrEmpty(token))
+    {
+        context.Request.Headers["Authorization"] = $"Bearer {token}";
+    }
+    await next();
+});
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -150,18 +143,19 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.MapControllers();
 app.UseStaticFiles();
-// Настраиваем Hangfire Dashboard с фильтром авторизации
+app.MapControllers();
+
+// --- Hangfire Dashboard ---
 app.UseHangfireDashboard("/hangfire", new DashboardOptions
 {
-    Authorization = new[] { new HangfireAuthorizationFilter(app.Configuration, app.Services) }
-
+    Authorization = new[] { new HangfireAuthorizationFilter() },
+    IgnoreAntiforgeryToken = true,
+    IsReadOnlyFunc = _ => false,
+    AppPath = "/admin/login"
 });
 
-
-app.MapGet("/", () => "Hello World!");
-// Настраиваем задачи Hangfire
+// --- Планировщик задач ---
 RecurringJob.AddOrUpdate<FileCleanupService>(
     "cleanup-files",
     service => service.CleanupOrphanedFilesAsync(3),
@@ -170,21 +164,50 @@ RecurringJob.AddOrUpdate<FileCleanupService>(
 RecurringJob.AddOrUpdate<BackgroundTasksService>(
     "award-birthday-points",
     x => x.AwardBirthdayPointsAsync(),
-    Cron.Daily); // Ежедневно
+    Cron.Daily);
+
+app.MapGet("/", () => "Hello World!");
+
 app.Run();
-static void ConfigureDevelopmentServices(IServiceCollection services)
+
+// --- Конфигурация аутентификации ---
+static void ConfigureAuthentication(IServiceCollection services, IConfiguration configuration)
+{
+    var jwtSettings = configuration.GetSection("JwtSettings");
+    var secretKey = Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]);
+
+    services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtSettings["Issuer"],
+            ValidAudience = jwtSettings["Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(secretKey)
+        };
+    });
+}
+
+// --- Конфигурация Swagger ---
+static void ConfigureSwagger(IServiceCollection services)
 {
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlFilePath = Path.Combine(AppContext.BaseDirectory, xmlFile);
 
     services.AddSwaggerGen(opts =>
     {
-
-        
         opts.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
         {
             In = ParameterLocation.Header,
-            Description = "Please enter your Bearer token",
+            Description = "Введите JWT токен",
             Name = "Authorization",
             Type = SecuritySchemeType.ApiKey
         });
@@ -205,17 +228,11 @@ static void ConfigureDevelopmentServices(IServiceCollection services)
         });
 
         opts.SchemaFilter<EnumDescriptionSchemaFilter>();
-        opts.UseInlineDefinitionsForEnums();
         opts.CustomSchemaIds(type => type.FullName);
         opts.IncludeXmlComments(xmlFilePath, true);
         opts.UseAllOfToExtendReferenceSchemas();
         opts.UseAllOfForInheritance();
         opts.UseOneOfForPolymorphism();
-        opts.UseInlineDefinitionsForEnums();
         opts.SelectDiscriminatorNameUsing(_ => "$type");
     });
-
-    services.AddEndpointsApiExplorer();
 }
-
-

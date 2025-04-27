@@ -42,8 +42,8 @@ public class AdminAuthController(ApplicationDbContext db, IConfiguration config)
         if (!isAdmin)
             return Unauthorized("Доступ только для администраторов");
 
-        // Выдаем JWT токен
-        var claims = new[] {
+        var claims = new[]
+        {
         new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
         new Claim(ClaimTypes.Role, "Admin")
     };
@@ -59,19 +59,21 @@ public class AdminAuthController(ApplicationDbContext db, IConfiguration config)
 
         var jwt = new JwtSecurityTokenHandler().WriteToken(token);
 
-        // Создаем ссылку на Hangfire с Bearer токеном
-        var hangfireUrl = $"{Request.Scheme}://{Request.Host}/hangfire";
+        var hangfireUrl = $"{Request.Scheme}://{Request.Host}/hangfire?access_token={jwt}";
+
         var html = $"""
-    <p>Авторизация прошла успешно.</p>
-    <p>Вот ваш токен:</p>
-    <textarea style="width:100%;height:200px;">{jwt}</textarea>
-    <p>Вставьте его в заголовок Authorization: Bearer &lt;token&gt; при заходе в Hangfire</p>
-    <p>Перейти в <a href="{hangfireUrl}" target="_blank">Hangfire</a> (с токеном)</p>
-    <p>Для авторизации в Hangfire добавьте токен в заголовок Authorization: Bearer {jwt}</p>
+        <div style="font-family:sans-serif;max-width:600px;margin:50px auto;text-align:center;">
+            <h2>Токен</h2>
+            <textarea readonly style="width:100%;height:150px;">{jwt}</textarea>
+            <div style="margin-top:20px;">
+                <a href="{hangfireUrl}" target="_blank" style="display:inline-block;padding:10px 20px;background:#4CAF50;color:white;text-decoration:none;border-radius:5px;">Перейти в Hangfire</a>
+            </div>
+        </div>
     """;
 
         return Content(html, "text/html", Encoding.UTF8);
     }
+
 
 
 
