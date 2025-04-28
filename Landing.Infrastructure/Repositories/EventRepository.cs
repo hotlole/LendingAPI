@@ -66,7 +66,18 @@ namespace Landing.Infrastructure.Repositories
             _context.Events.Remove(entity);
             await _context.SaveChangesAsync();
             return true;
+
         }
+        public async Task<Event?> GetByIdWithRegistrationsAsync(int id)
+        {
+            return await _context.Events
+                .Include(e => e.Attendances)
+                    .ThenInclude(a => a.User)
+                .FirstOrDefaultAsync(e => e.Id == id);
+        }
+
+
+
 
 
     }

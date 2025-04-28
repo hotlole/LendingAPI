@@ -1,25 +1,36 @@
 ﻿using Hangfire.Dashboard;
-using Landing.Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using System.Text;
-
 
 namespace Landing.Core.Models
 {
     public class HangfireAuthorizationFilter : IDashboardAuthorizationFilter
     {
+        private readonly TokenValidationParameters _tokenValidationParameters;
+
+        public HangfireAuthorizationFilter(IConfiguration configuration)
+        {
+            var jwtSettings = configuration.GetSection("JwtSettings");
+
+            _tokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = false,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = jwtSettings["Issuer"],
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]))
+            };
+        }
+
         public bool Authorize(DashboardContext context)
         {
             var httpContext = context.GetHttpContext();
+            var path = httpContext.Request.Path.Value?.ToLowerInvariant();
 
-            var path = httpContext.Request.Path.Value;
-
-            // Разрешаем грузить CSS, JS, шрифты без авторизации
+            // Разрешаем грузить статику без авторизации
             if (path != null && (
                 path.StartsWith("/hangfire/css") ||
                 path.StartsWith("/hangfire/js") ||
@@ -29,19 +40,24 @@ namespace Landing.Core.Models
                 return true;
             }
 
-            // Проверяем наличие Bearer токена
             var authHeader = httpContext.Request.Headers["Authorization"].FirstOrDefault();
             if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer "))
             {
                 var token = authHeader.Substring("Bearer ".Length).Trim();
 
-                // Тут простая проверка — токен вообще передан
-                return !string.IsNullOrEmpty(token);
+                var tokenHandler = new JwtSecurityTokenHandler();
+                try
+                {
+                    var principal = tokenHandler.ValidateToken(token, _tokenValidationParameters, out var validatedToken);
+                    return principal.Identity?.IsAuthenticated == true;
+                }
+                catch
+                {
+                    return false;
+                }
             }
 
             return false;
         }
     }
-
-
-    }
+}

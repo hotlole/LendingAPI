@@ -125,13 +125,21 @@ using (var scope = app.Services.CreateScope())
 // --- Middleware ---
 app.Use(async (context, next) =>
 {
-    var token = context.Request.Query["access_token"].FirstOrDefault();
-    if (!string.IsNullOrEmpty(token))
+    var path = context.Request.Path.Value?.ToLowerInvariant();
+
+    // Только на сам путь /hangfire и его корень
+    if (path != null && (path == "/hangfire" || path == "/hangfire/"))
     {
-        context.Request.Headers["Authorization"] = $"Bearer {token}";
+        var token = context.Request.Query["access_token"].FirstOrDefault();
+        if (!string.IsNullOrEmpty(token))
+        {
+            context.Request.Headers["Authorization"] = $"Bearer {token}";
+        }
     }
+
     await next();
 });
+
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -149,11 +157,12 @@ app.MapControllers();
 // --- Hangfire Dashboard ---
 app.UseHangfireDashboard("/hangfire", new DashboardOptions
 {
-    Authorization = new[] { new HangfireAuthorizationFilter() },
+    Authorization = new[] { new HangfireAuthorizationFilter(app.Services.GetRequiredService<IConfiguration>()) },
     IgnoreAntiforgeryToken = true,
     IsReadOnlyFunc = _ => false,
     AppPath = "/admin/login"
 });
+
 
 // --- Планировщик задач ---
 RecurringJob.AddOrUpdate<FileCleanupService>(
@@ -186,7 +195,7 @@ static void ConfigureAuthentication(IServiceCollection services, IConfiguration 
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
-            ValidateAudience = true,
+            ValidateAudience = false,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             ValidIssuer = jwtSettings["Issuer"],

@@ -10,5 +10,6 @@ namespace Landing.Application.Interfaces
         Task<Event> UpdateAsync(Event eventItem);
         Task AddAsync(Event eventEntity);
         Task<bool> DeleteAsync(int id);
+        Task<Event?> GetByIdWithRegistrationsAsync(int eventId);
     }
 }

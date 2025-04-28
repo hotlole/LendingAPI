@@ -193,8 +193,6 @@ public class EventService
         }
     }
 
-
-
     public async Task<string?> GetHtmlTemplateAsync(int eventId)
     {
         var eventItem = await _eventRepository.GetByIdAsync(eventId) as OfflineEvent;
@@ -210,4 +208,17 @@ public class EventService
         eventItem.CustomHtmlTemplate = htmlTemplate;
         await _eventRepository.UpdateAsync(eventItem);
     }
+    public async Task<List<RegisteredUserDto>> GetRegisteredUsersAsync(int eventId)
+    {
+        return await _context.EventAttendances
+            .Where(ea => ea.EventId == eventId)
+            .Select(ea => new RegisteredUserDto
+            {
+                UserId = ea.UserId,
+                FullName = ea.User.FullName
+            })
+            .ToListAsync();
+    }
+
+
 }

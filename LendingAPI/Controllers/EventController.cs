@@ -196,6 +196,27 @@ namespace Landing.API.Controllers
                 return BadRequest($"Ошибка: {ex.Message}");
             }
         }
+        /// <summary>
+        /// Получить список пользователей, записанных на мероприятие.
+        /// </summary>
+        /// <param name="eventId">Идентификатор мероприятия.</param>
+        /// <returns>Список пользователей, записанных на мероприятие, включая их ФИО.</returns>
+        [HttpGet("{eventId}/registered-users")]
+        [ProducesResponseType(typeof(IEnumerable<RegisteredUserDto>), 200)]
+        [ProducesResponseType(404)]
+        [SwaggerOperation(
+            Summary = "Получить список пользователей мероприятия",
+            Description = "Возвращает список пользователей, записанных на указанное мероприятие, включая их ФИО."
+        )]
+        public async Task<IActionResult> GetRegisteredUsers(int eventId)
+        {
+            var users = await _eventService.GetRegisteredUsersAsync(eventId);
+
+            if (users == null || !users.Any())
+                return NotFound("На мероприятие никто не записан или оно не найдено.");
+
+            return Ok(users);
+        }
 
     }
 }
