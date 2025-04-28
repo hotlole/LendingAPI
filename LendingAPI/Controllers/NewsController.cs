@@ -90,7 +90,12 @@ namespace LandingAPI.Controllers
             news.PublishedAt = DateTime.UtcNow;
 
             await _newsService.AddNewsAsync(news);
-            return CreatedAtAction(nameof(GetById), new { id = news.Id }, news);
+
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            var newsDto = _mapper.Map<NewsDto>(news);
+            newsDto.ImageUrl = BuildFullImageUrl(news.ImageUrl, baseUrl);
+
+            return CreatedAtAction(nameof(GetById), new { id = news.Id }, newsDto);
         }
 
         /// <summary>
@@ -159,6 +164,17 @@ namespace LandingAPI.Controllers
 
             // Вернуть все пути, например:
             return Ok(paths); // { original: "...", large: "...", medium: "...", small: "..." }
+        }
+        private static string BuildFullImageUrl(string? path, string baseUrl)
+        {
+            if (string.IsNullOrEmpty(path))
+                return string.Empty;
+
+            if (path.StartsWith("/uploads"))
+                return $"{baseUrl}{path}";
+
+            // Если это ВК или какой-то внешний путь — возвращаем как есть
+            return path;
         }
 
     }

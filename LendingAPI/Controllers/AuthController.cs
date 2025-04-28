@@ -26,18 +26,15 @@ namespace LandingAPI.Controllers
     {
         private readonly IConfiguration _configuration;
         private readonly ApplicationDbContext _context;
-        private readonly UserRepository _userRepository;
+        private readonly IUserRepository _userRepository;
         private readonly IEmailService _emailService;
-
-
-
         /// <summary>
         /// Конструктор контроллера авторизации.
         /// </summary>
         /// <param name="configuration">Конфигурация приложения</param>
         /// <param name="context">Контекст базы данных</param>
         /// <param name="userRepository">Репозиторий пользователей</param>
-        public AuthController(IConfiguration configuration, ApplicationDbContext context, UserRepository userRepository, IEmailService emailService)
+        public AuthController(IConfiguration configuration, ApplicationDbContext context, IUserRepository userRepository, IEmailService emailService)
         {
             _configuration = configuration;
             _context = context;

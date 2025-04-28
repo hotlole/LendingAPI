@@ -56,7 +56,8 @@ builder.Services.AddScoped<IUserTransactionService, UserTransactionService>();
 builder.Services.AddScoped<FileCleanupService>();
 builder.Services.AddScoped<ImageCompressionService>();
 builder.Services.AddHttpClient<VkService>();
-
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddTransient<ImageUrlResolver>();
 // --- Автоматическое маппинг профилей ---
 builder.Services.AddAutoMapper(cfg =>
 {
