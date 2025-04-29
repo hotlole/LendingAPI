@@ -20,12 +20,13 @@ namespace LandingAPI.Controllers
         private readonly NewsService _newsService;
         private readonly IWebHostEnvironment _environment;
         private readonly IMapper _mapper;
-
-        public NewsController(NewsService newsService, IWebHostEnvironment environment, IMapper mapper)
+        private readonly ImageCompressionService _imageCompressionService;
+        public NewsController(NewsService newsService, IWebHostEnvironment environment, IMapper mapper, ImageCompressionService imageCompressionService)
         {
             _newsService = newsService;
             _environment = environment;
             _mapper = mapper;
+            _imageCompressionService = imageCompressionService;
         }
         /// <summary>
         /// Получить список всех новостей с поддержкой поиска, сортировки и пагинации.
@@ -86,7 +87,14 @@ namespace LandingAPI.Controllers
                 return BadRequest(ModelState);
 
             var news = _mapper.Map<News>(dto);
-            news.ImageUrl = dto.ImageFile != null ? await SaveImageAsync(dto.ImageFile) : null;
+            if (dto.ImageFile != null)
+            {
+                using var stream = dto.ImageFile.OpenReadStream();
+                var paths = await _imageCompressionService.SaveCompressedVersionsAsync(stream, dto.ImageFile.FileName);
+                news.ImageUrl = paths["original"]; // или "large"/"medium"/"small" — выбирайте основной
+            }
+
+
             news.PublishedAt = DateTime.UtcNow;
 
             await _newsService.AddNewsAsync(news);
@@ -94,7 +102,6 @@ namespace LandingAPI.Controllers
             var baseUrl = $"{Request.Scheme}://{Request.Host}";
             var newsDto = _mapper.Map<NewsDto>(news);
             newsDto.ImageUrl = BuildFullImageUrl(news.ImageUrl, baseUrl);
-
             return CreatedAtAction(nameof(GetById), new { id = news.Id }, newsDto);
         }
 
@@ -113,8 +120,11 @@ namespace LandingAPI.Controllers
 
             if (dto.ImageFile != null)
             {
-                existingNews.ImageUrl = await SaveImageAsync(dto.ImageFile);
+                using var stream = dto.ImageFile.OpenReadStream();
+                var paths = await _imageCompressionService.SaveCompressedVersionsAsync(stream, dto.ImageFile.FileName);
+                existingNews.ImageUrl = paths["original"];
             }
+
 
             await _newsService.UpdateNewsAsync(existingNews);
             return NoContent();

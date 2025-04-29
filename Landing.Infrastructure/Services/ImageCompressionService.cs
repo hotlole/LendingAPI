@@ -39,19 +39,20 @@ namespace Landing.Infrastructure.Services
             {
                 var outputDir = Path.Combine(uploadsRoot, folder);
                 Directory.CreateDirectory(outputDir);
-
                 var outputPath = Path.Combine(outputDir, baseFileName);
 
-                image.Mutate(x => x.Resize(new ResizeOptions
+                imageStream.Position = 0; // сбрасываем поток
+                using var resizedImage = await Image.LoadAsync(imageStream);
+                resizedImage.Mutate(x => x.Resize(new ResizeOptions
                 {
                     Size = new Size(width, height),
                     Mode = ResizeMode.Max
                 }));
 
-                await image.SaveAsJpegAsync(outputPath, new JpegEncoder { Quality = 85 });
-
+                await resizedImage.SaveAsJpegAsync(outputPath, new JpegEncoder { Quality = 85 });
                 savedPaths[folder] = $"/uploads/{folder}/{baseFileName}";
             }
+
 
             // Можно также сохранить оригинал
             var originalDir = Path.Combine(uploadsRoot, "original");

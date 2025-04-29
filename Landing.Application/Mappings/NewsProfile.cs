@@ -7,7 +7,7 @@ public class NewsProfile : Profile
     public NewsProfile()
     {
         CreateMap<News, NewsDto>()
-            .ForMember(dest => dest.ImageUrl, opt => opt.MapFrom<ImageUrlResolver>())
+             .ForMember(dest => dest.ImageUrl, opt => opt.MapFrom<RelativePathResolver<News>>())
             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
             .ForMember(dest => dest.Title, opt => opt.MapFrom(src => src.Title))
             .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Description))

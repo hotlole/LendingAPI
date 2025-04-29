@@ -42,6 +42,10 @@
 
 	<ItemGroup>
     <Folder Include="wwwroot\uploads\" />
+    <Folder Include="wwwroot\uploads\large\" />
+    <Folder Include="wwwroot\uploads\medium\" />
+    <Folder Include="wwwroot\uploads\original\" />
+    <Folder Include="wwwroot\uploads\small\" />
   </ItemGroup>
 
 	<ItemGroup>

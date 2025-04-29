@@ -66,6 +66,8 @@ namespace Landing.Application.DTOs.Events
         [SwaggerSchema("Пользовательский HTML-шаблон мероприятия.")]
         public string? CustomHtmlTemplate { get; set; }
 
+        public string? ImageUrl { get; set; }
+
         public void Mapping(Profile profile)
         {
             profile.CreateMap<Event, EventDto>();

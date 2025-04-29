@@ -18,6 +18,8 @@ using Microsoft.OpenApi.Models;
 using Serilog;
 using System.Reflection;
 using System.Text;
+using Landing.Core.Models.Events;
+using Landing.Core.Models.News;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -57,7 +59,8 @@ builder.Services.AddScoped<FileCleanupService>();
 builder.Services.AddScoped<ImageCompressionService>();
 builder.Services.AddHttpClient<VkService>();
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddTransient<ImageUrlResolver>();
+builder.Services.AddTransient<RelativePathResolver<Event>>();
+builder.Services.AddTransient<RelativePathResolver<News>>();
 // --- Автоматическое маппинг профилей ---
 builder.Services.AddAutoMapper(cfg =>
 {
@@ -145,14 +148,20 @@ app.Use(async (context, next) =>
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "API v1");
+        c.HeadContent = """
+<link rel="stylesheet" href="/css/swagger-custom.css">
+""";
+    });
 }
-
-app.UseHttpsRedirection();
-app.UseStaticFiles();
 app.MapControllers();
 
 // --- Hangfire Dashboard ---

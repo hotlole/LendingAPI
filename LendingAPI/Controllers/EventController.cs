@@ -5,6 +5,7 @@ using AutoMapper;
 using Swashbuckle.AspNetCore.Annotations;
 using Landing.Core.Models.Events;
 using Landing.Application.DTOs.Events;
+using Landing.Infrastructure.Services;
 
 namespace Landing.API.Controllers
 {
@@ -18,12 +19,13 @@ namespace Landing.API.Controllers
         private readonly IEventRepository _eventRepository;
         private readonly IMapper _mapper;
         private readonly EventService _eventService;
-
-        public EventController(IEventRepository eventRepository, IMapper mapper, EventService eventService)
+        private readonly ImageCompressionService _imageCompressionService;
+        public EventController(IEventRepository eventRepository, IMapper mapper, EventService eventService,ImageCompressionService imageCompressionService)
         {
             _eventRepository = eventRepository;
             _mapper = mapper;
             _eventService = eventService;
+            _imageCompressionService = imageCompressionService;
         }
 
         /// <summary>
@@ -57,18 +59,34 @@ namespace Landing.API.Controllers
         /// </summary>
         [HttpPost]
         [Authorize(Roles = "Admin")]
+        [Consumes("multipart/form-data")]
         [ProducesResponseType(typeof(EventDto), 201)]
         [ProducesResponseType(400)]
-
-        public async Task<IActionResult> Create([FromBody] CreateEventDto dto)
+        public async Task<IActionResult> Create([FromForm] CreateEventDto dto, IFormFile? image)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-            var eventItem = await _eventService.CreateAsync(dto);
+            string? imageUrl = null;
+
+            if (image != null && image.Length > 0)
+            {
+                // Сохраняем изображение
+                await using var stream = image.OpenReadStream();
+                var paths = await _imageCompressionService.SaveCompressedVersionsAsync(stream, image.FileName);
+                imageUrl = paths["original"]; // Путь до изображения, который будет сохранён в модели
+            }
+
+            // Создаём сущность события
+            var eventItem = await _eventService.CreateAsync(dto, imageUrl);
+
+            // Маппим DTO из события
             var eventDto = _mapper.Map<EventDto>(eventItem);
 
             return CreatedAtAction(nameof(GetById), new { id = eventItem.Id }, eventDto);
         }
+
+
 
         /// <summary>
         /// Обновить мероприятие (только для Админов).

@@ -5,26 +5,31 @@ using Microsoft.AspNetCore.Http;
 
 namespace Landing.Application.Mappings
 {
-    public class ImageUrlResolver : IValueResolver<News, NewsDto, string?>
+    public class RelativePathResolver<TSource> : IValueResolver<TSource, object, string?>
+    where TSource : class
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public ImageUrlResolver(IHttpContextAccessor httpContextAccessor)
+        public RelativePathResolver(IHttpContextAccessor httpContextAccessor)
         {
             _httpContextAccessor = httpContextAccessor;
         }
 
-        public string? Resolve(News source, NewsDto destination, string? destMember, ResolutionContext context)
+        public string? Resolve(TSource source, object destination, string? destMember, ResolutionContext context)
         {
-            if (string.IsNullOrEmpty(source.ImageUrl))
+            var property = typeof(TSource).GetProperty("ImageUrl");
+            if (property == null) return null;
+
+            var relativePath = property.GetValue(source) as string;
+            if (string.IsNullOrEmpty(relativePath))
                 return null;
 
             var request = _httpContextAccessor.HttpContext?.Request;
+            if (request == null || relativePath.StartsWith("http"))
+                return relativePath;
 
-            if (request == null || source.ImageUrl.StartsWith("http"))
-                return source.ImageUrl;
-
-            return $"{request.Scheme}://{request.Host}{source.ImageUrl}";
+            return $"{request.Scheme}://{request.Host}{relativePath}";
         }
     }
+
 }

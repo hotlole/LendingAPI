@@ -73,8 +73,9 @@ public class EventService
 
     public async Task UpdateAsync(Event eventItem) => await _eventRepository.UpdateAsync(eventItem);
     public async Task DeleteAsync(int id) => await _eventRepository.DeleteAsync(id);
-    public async Task<Event> CreateAsync(CreateEventDto dto)
+    public async Task<Event> CreateAsync(CreateEventDto dto, string? imageUrl)
     {
+        // Создаём событие в зависимости от типа
         Event eventItem = dto.Type switch
         {
             EventType.Regular => _mapper.Map<RegularEvent>(dto),
@@ -94,10 +95,18 @@ public class EventService
             }
             curatorsList.AddRange(curatorEntities);
         }
+
+        // Если путь к изображению есть, присваиваем его
+        if (imageUrl != null)
+        {
+            eventItem.ImagePath = imageUrl; // Присваиваем путь к изображению
+        }
+
         // Сохраняем мероприятие
         await _eventRepository.AddAsync(eventItem);
         return eventItem;
     }
+
 
     private OfflineEvent CreateOfflineEvent(CreateEventDto dto)
     {

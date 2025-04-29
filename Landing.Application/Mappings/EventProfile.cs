@@ -23,7 +23,14 @@ namespace Landing.Application.Mappings
                 .ForMember(dest => dest.Longitude, opt => opt.MapFrom(src => src.Longitude))
                 .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.Address))
                 .ForMember(dest => dest.CustomHtmlTemplate, opt => opt.MapFrom(src => src.CustomHtmlTemplate));
+            CreateMap<Event, EventDto>()
+            .ForMember(dest => dest.ImageUrl, opt => opt.MapFrom<RelativePathResolver<Event>>());
 
+            CreateMap<CreateEventDto, Event>()
+                .ForMember(dest => dest.ImagePath, opt => opt.Ignore());
+
+            CreateMap<UpdateEventDto, Event>()
+                .ForMember(dest => dest.ImagePath, opt => opt.Ignore());
             // Для ответа
             CreateMap<Event, EventDto>()
                 .Include<RegularEvent, EventDto>()

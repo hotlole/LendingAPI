@@ -40,7 +40,6 @@ namespace Landing.Application.DTOs.Events
         [SwaggerSchema("HTML-шаблон мероприятия (только для очных мероприятий).")]
         public string? CustomHtmlTemplate { get; set; }
         public List<int>? CuratorIds { get; set; }
-
         public void Mapping(Profile profile)
         {
             profile.CreateMap<CreateEventDto, Event>();
