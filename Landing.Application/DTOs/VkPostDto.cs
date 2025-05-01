@@ -22,6 +22,7 @@ namespace Landing.Application.DTOs
         // Внешняя ссылка (если в посте есть прикреплённая ссылка)
         public string? ExternalLink { get; set; }
         public string? LinkTitle { get; set; }
+        public string? VkPostId { get; set; }
         public JsonElement? AttachmentsRaw { get; set; } // сохраняем оригинальные вложения
     }
 }

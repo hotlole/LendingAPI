@@ -53,8 +53,17 @@ namespace LendingAPI.Controllers
 
             foreach (var post in posts)
             {
-                if ((_context.News.Any(n => n.PublishedAt == post.PublishedAt)) && string.IsNullOrWhiteSpace(post.Text) && (post.AttachmentsRaw == null || !post.AttachmentsRaw.Value.EnumerateArray().Any()))
+                //  Пропускать, только если нет текста И вложений
+                if (string.IsNullOrWhiteSpace(post.Text) &&
+                    (post.AttachmentsRaw == null || !post.AttachmentsRaw.Value.EnumerateArray().Any()))
                 {
+                    continue;
+                }
+
+                if (!string.IsNullOrEmpty(post.VkPostId) && _context.News.Any(n => n.VkPostId == post.VkPostId))
+
+                {
+                    _logger.LogInformation("Пропущен дубликат поста с VkPostId = {Id}", post.VkPostId);
                     continue;
                 }
 
@@ -75,7 +84,8 @@ namespace LendingAPI.Controllers
                     VideoPreviewUrl = post.VideoPreviewUrl,
                     ExternalLink = post.ExternalLink,
                     LinkTitle = post.LinkTitle,
-                    AdditionalImages = new List<NewsImage>()
+                    AdditionalImages = new List<NewsImage>(),
+                    VkPostId = post.VkPostId
                 };
 
                 // Обработка основного изображения
