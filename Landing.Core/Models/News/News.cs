@@ -19,6 +19,8 @@
         // Ссылка
         public string? ExternalLink { get; set; }
         public string? LinkTitle { get; set; }
+        public string? VkPostId { get; set; }
+
 
         // Навигационное свойство к дополнительным изображениям
         public List<NewsImage> AdditionalImages { get; set; } = new();

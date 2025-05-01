@@ -82,7 +82,7 @@ namespace Landing.API.Controllers
 
             // Маппим DTO из события
             var eventDto = _mapper.Map<EventDto>(eventItem);
-
+            eventDto.ImageUrl = imageUrl;
             return CreatedAtAction(nameof(GetById), new { id = eventItem.Id }, eventDto);
         }
 

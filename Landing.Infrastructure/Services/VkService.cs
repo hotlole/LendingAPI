@@ -55,7 +55,7 @@ public class VkService
 
             if (item.TryGetProperty("attachments", out var attachments))
             {
-                // 📝 ЛОГИРУЕМ JSON вложений
+                // ЛОГИРУЕМ JSON вложений
                 var postId = item.TryGetProperty("id", out var idProp) ? idProp.GetInt32() : 0;
                 var logDir = Path.Combine("vk_logs");
                 Directory.CreateDirectory(logDir);
@@ -92,6 +92,7 @@ public class VkService
                                 }
                             }
                             break;
+
 
                         case "video":
                             if (attachment.TryGetProperty("video", out var video))

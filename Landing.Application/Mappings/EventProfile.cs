@@ -1,49 +1,25 @@
 ﻿using AutoMapper;
 using Landing.Application.DTOs.Events;
 using Landing.Core.Models.Events;
+using Microsoft.AspNetCore.Http;
 
-namespace Landing.Application.Mappings
+namespace Landing.Application.Mappings;
+
+public class EventProfile : Profile
 {
-    public class EventProfile : Profile
+    public EventProfile()
     {
-        public EventProfile()
-        {
-            // RegularEvent
-            CreateMap<CreateEventDto, RegularEvent>()
-                .ForMember(dest => dest.Type, opt => opt.MapFrom(_ => EventType.Regular));
+        CreateMap<Event, EventDto>()
+            .ForMember(dest => dest.ImageUrl, opt => opt.MapFrom<RelativePathResolver<Event>>())
+            .ForMember(dest => dest.ImageUrl, opt => opt.MapFrom(src => src.ImagePath));
 
-            // CuratedEvent
-            CreateMap<CreateEventDto, CuratedEvent>()
-                .ForMember(dest => dest.Type, opt => opt.MapFrom(_ => EventType.Curated));
+        CreateMap<RegularEvent, EventDto>().IncludeBase<Event, EventDto>();
+        CreateMap<CuratedEvent, EventDto>().IncludeBase<Event, EventDto>();
+        CreateMap<OfflineEvent, EventDto>().IncludeBase<Event, EventDto>();
 
-            // OfflineEvent
-            CreateMap<CreateEventDto, OfflineEvent>()
-                .ForMember(dest => dest.Type, opt => opt.MapFrom(_ => EventType.Offline))
-                .ForMember(dest => dest.Latitude, opt => opt.MapFrom(src => src.Latitude))
-                .ForMember(dest => dest.Longitude, opt => opt.MapFrom(src => src.Longitude))
-                .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.Address))
-                .ForMember(dest => dest.CustomHtmlTemplate, opt => opt.MapFrom(src => src.CustomHtmlTemplate));
-            CreateMap<Event, EventDto>()
-            .ForMember(dest => dest.ImageUrl, opt => opt.MapFrom<RelativePathResolver<Event>>());
-
-            CreateMap<CreateEventDto, Event>()
-                .ForMember(dest => dest.ImagePath, opt => opt.Ignore());
-
-            CreateMap<UpdateEventDto, Event>()
-                .ForMember(dest => dest.ImagePath, opt => opt.Ignore());
-            // Для ответа
-            CreateMap<Event, EventDto>()
-                .Include<RegularEvent, EventDto>()
-                .Include<CuratedEvent, EventDto>()
-                .Include<OfflineEvent, EventDto>();
-
-            CreateMap<RegularEvent, EventDto>();
-            CreateMap<CuratedEvent, EventDto>();
-            CreateMap<OfflineEvent, EventDto>()
-                .ForMember(dest => dest.Latitude, opt => opt.MapFrom(src => src.Latitude))
-                .ForMember(dest => dest.Longitude, opt => opt.MapFrom(src => src.Longitude))
-                .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.Address))
-                .ForMember(dest => dest.CustomHtmlTemplate, opt => opt.MapFrom(src => src.CustomHtmlTemplate));
-        }
+        CreateMap<CreateEventDto, Event>();
+        CreateMap<CreateEventDto, RegularEvent>().IncludeBase<CreateEventDto, Event>();
+        CreateMap<CreateEventDto, CuratedEvent>().IncludeBase<CreateEventDto, Event>();
+        CreateMap<CreateEventDto, OfflineEvent>().IncludeBase<CreateEventDto, Event>();
     }
 }

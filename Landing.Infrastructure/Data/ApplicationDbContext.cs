@@ -42,6 +42,11 @@ namespace Landing.Infrastructure.Data
                 .WithMany(n => n.AdditionalImages)
                 .HasForeignKey(i => i.NewsId)
                 .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<News>()
+                .HasIndex(n => n.VkPostId)
+                .IsUnique()
+                .HasFilter("VkPostId IS NOT NULL");
+
 
             modelBuilder.ApplyConfiguration(new EventConfiguration());
             modelBuilder.ApplyConfiguration(new OfflineEventConfiguration());

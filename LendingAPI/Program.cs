@@ -60,13 +60,15 @@ builder.Services.AddScoped<ImageCompressionService>();
 builder.Services.AddHttpClient<VkService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddTransient<RelativePathResolver<Event>>();
+builder.Services.AddTransient<RelativePathResolver<RegularEvent>>();
+builder.Services.AddTransient<RelativePathResolver<CuratedEvent>>();
+builder.Services.AddTransient<RelativePathResolver<OfflineEvent>>();
 builder.Services.AddTransient<RelativePathResolver<News>>();
 // --- Автоматическое маппинг профилей ---
 builder.Services.AddAutoMapper(cfg =>
 {
-    cfg.AddProfile<EventProfile>();
-    cfg.AddProfile<NewsProfile>();
-}, Assembly.GetExecutingAssembly());
+    cfg.ConstructServicesUsing(type => builder.Services.BuildServiceProvider().GetRequiredService(type));
+}, AppDomain.CurrentDomain.GetAssemblies());
 
 // --- FluentValidation ---
 builder.Services.AddFluentValidationAutoValidation()

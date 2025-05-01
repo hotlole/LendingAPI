@@ -34,19 +34,9 @@ namespace LendingAPI.Controllers
             _context = context;
             _logger = logger;
         }
-        // <summary>
+        /// <summary>
         /// Импортирует последние посты из группы VK.
         /// </summary>
-        /// <remarks>
-        /// Импортирует до 5 последних постов из VK-группы, исключая уже импортированные посты с таким же заголовком.
-        /// Также загружает изображения, масштабируя их в соответствии с заданным размером.
-        /// </remarks>
-        /// <param name="preferredSize">
-        /// Желаемый размер изображений:
-        /// 0 = Original (Оригинальный размер), 
-        /// 1 = 512x380, 
-        /// 2 = 256x190.
-        /// </param>
         /// <response code="200">Успешно импортировано. Возвращает количество импортированных постов.</response>
         /// <response code="401">Неавторизованный доступ.</response>
         /// <response code="403">Доступ запрещен (нужна роль администратора).</response>
@@ -56,16 +46,14 @@ namespace LendingAPI.Controllers
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(500)]
-        public async Task<IActionResult> ImportVkPosts([FromQuery] ImageSize preferredSize = ImageSize.Size_512x380)
+        public async Task<IActionResult> ImportVkPosts()
         {
             var posts = await _vkService.GetGroupPostsAsync(count: 5);
             int imported = 0;
 
             foreach (var post in posts)
             {
-                // 💡 Пропускать, только если нет текста И вложений
-                if (string.IsNullOrWhiteSpace(post.Text) &&
-                    (post.AttachmentsRaw == null || !post.AttachmentsRaw.Value.EnumerateArray().Any()))
+                if ((_context.News.Any(n => n.PublishedAt == post.PublishedAt)) && string.IsNullOrWhiteSpace(post.Text) && (post.AttachmentsRaw == null || !post.AttachmentsRaw.Value.EnumerateArray().Any()))
                 {
                     continue;
                 }
@@ -90,72 +78,46 @@ namespace LendingAPI.Controllers
                     AdditionalImages = new List<NewsImage>()
                 };
 
-                // 🔁 Обход вложений напрямую (attachments raw)
-                if (post.AttachmentsRaw != null)
-                {
-                    foreach (var attachment in post.AttachmentsRaw.Value.EnumerateArray())
-                    {
-                        if (!attachment.TryGetProperty("type", out var typeProp)) continue;
-                        var type = typeProp.GetString();
-
-                        if (type == "video" && attachment.TryGetProperty("video", out var video))
-                        {
-                            // Превью из video.image
-                            if (video.TryGetProperty("image", out var images))
-                            {
-                                var bestPreview = images.EnumerateArray()
-                                    .OrderByDescending(i => i.GetProperty("width").GetInt32() * i.GetProperty("height").GetInt32())
-                                    .FirstOrDefault();
-
-                                if (bestPreview.ValueKind != JsonValueKind.Undefined &&
-                                    bestPreview.TryGetProperty("url", out var previewUrl))
-                                {
-                                    news.AdditionalImages.Add(new NewsImage
-                                    {
-                                        Url = previewUrl.GetString()!
-                                    });
-                                }
-                            }
-
-                            // Video URL (если нет — составим вручную)
-                            if (string.IsNullOrEmpty(news.VideoUrl))
-                            {
-                                var vid = video.TryGetProperty("id", out var videoIdProp) ? videoIdProp.GetInt32() : 0;
-                                var oid = video.TryGetProperty("owner_id", out var ownerIdProp) ? ownerIdProp.GetInt32() : 0;
-                                var accessKey = video.TryGetProperty("access_key", out var keyProp) ? keyProp.GetString() : null;
-
-                                if (vid != 0 && oid != 0)
-                                {
-                                    news.VideoUrl = $"https://vk.com/video{oid}_{vid}" +
-                                        (string.IsNullOrEmpty(accessKey) ? "" : $"?access_key={accessKey}");
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // ⏬ Главное изображение сохраняем в файловую систему, если есть
-                string? fileBase = null;
+                // Обработка основного изображения
                 if (!string.IsNullOrWhiteSpace(post.ImageUrl))
                 {
                     try
                     {
-                        var dimensions = preferredSize.GetDimensions();
-                        var suffix = preferredSize.ToFileSuffix();
-                        fileBase = $"vk_{post.PublishedAt:yyyyMMdd_HHmmss}";
-                        var path = Path.Combine("wwwroot", "images/news");
+                        var fileBase = $"vk_{post.PublishedAt:yyyyMMdd_HHmmss}";
+                        var path = Path.Combine("wwwroot", "uploads");
                         Directory.CreateDirectory(path);
-                        var filePath = Path.Combine(path, $"{fileBase}_{suffix}.jpg");
 
+                        // Скачиваем изображение
                         using var httpClient = new HttpClient();
                         var imageBytes = await httpClient.GetByteArrayAsync(post.ImageUrl);
                         using var image = Image.Load(imageBytes);
 
-                        if (dimensions.HasValue)
-                            image.Mutate(x => x.Resize(dimensions.Value.width, dimensions.Value.height));
+                        // Сохраняем оригинал
+                        var originalPath = Path.Combine(path, $"{fileBase}_original.jpg");
+                        await image.SaveAsJpegAsync(originalPath);
 
-                        await image.SaveAsJpegAsync(filePath);
-                        news.ImageUrl = Path.Combine("images/news", $"{fileBase}_{suffix}.jpg").Replace("\\", "/");
+                        // Сохраняем сжатые версии
+                        var sizes = new[] { (512, 380), (256, 190), (128, 95) };
+                        foreach (var (width, height) in sizes)
+                        {
+                            var resizedPath = Path.Combine(path, $"{fileBase}_{width}x{height}.jpg");
+                            image.Mutate(x => x.Resize(width, height));
+                            await image.SaveAsJpegAsync(resizedPath);
+                        }
+
+                        // Добавляем пути к изображениям в NewsImage
+                        string folderPath = Path.Combine("uploads", "news", post.PublishedAt.ToString("yyyy/MM/dd"));
+                        Directory.CreateDirectory(Path.Combine("wwwroot", folderPath));
+                        var originalImagePath = Path.Combine(folderPath, $"{fileBase}_original.jpg");
+
+                        news.ImageUrl = $"https://localhost:7243/{originalImagePath.Replace("\\", "/")}";
+                        foreach (var (width, height) in sizes)
+                        {
+                            news.AdditionalImages.Add(new NewsImage
+                            {
+                                Url = $"/uploads/{fileBase}_{width}x{height}.jpg"
+                            });
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -163,23 +125,10 @@ namespace LendingAPI.Controllers
                     }
                 }
 
-                // ➕ Добавляем остальные изображения (кроме первого)
-                if (post.AdditionalImages != null && post.AdditionalImages.Count > 1)
-                {
-                    foreach (var imageUrl in post.AdditionalImages.Skip(1))
-                    {
-                        news.AdditionalImages.Add(new NewsImage
-                        {
-                            Url = imageUrl
-                        });
-                    }
-                }
-
                 _context.News.Add(news);
                 _logger.LogInformation("Импортирован пост: {Title}", title);
                 imported++;
             }
-
 
             await _context.SaveChangesAsync();
 

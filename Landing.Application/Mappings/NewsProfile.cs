@@ -1,21 +1,16 @@
 ﻿using AutoMapper;
 using Landing.Application.DTOs.News;
-using Landing.Application.Mappings;
 using Landing.Core.Models.News;
+using Landing.Application.Mappings;
+
 public class NewsProfile : Profile
 {
     public NewsProfile()
     {
         CreateMap<News, NewsDto>()
-             .ForMember(dest => dest.ImageUrl, opt => opt.MapFrom<RelativePathResolver<News>>())
-            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
-            .ForMember(dest => dest.Title, opt => opt.MapFrom(src => src.Title))
-            .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Description))
-            .ForMember(dest => dest.PublishedAt, opt => opt.MapFrom(src => src.PublishedAt));
+            .ForMember(dest => dest.ImageUrl, opt => opt.MapFrom<RelativePathResolver<News>>());
 
         CreateMap<CreateNewsDto, News>()
-            .ForMember(dest => dest.Title, opt => opt.MapFrom(src => src.Title))
-            .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Description))
             .ForMember(dest => dest.ImageUrl, opt => opt.Ignore())
             .ForMember(dest => dest.PublishedAt, opt => opt.MapFrom(_ => DateTime.UtcNow))
             .ForMember(dest => dest.Content, opt => opt.Ignore())
