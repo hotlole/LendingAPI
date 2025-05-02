@@ -85,7 +85,7 @@ namespace LendingAPI.Controllers
                     ExternalLink = post.ExternalLink,
                     LinkTitle = post.LinkTitle,
                     AdditionalImages = new List<NewsImage>(),
-                    VkPostId = post.VkPostId
+                    VkPostId = post.VkPostId.ToString()
                 };
 
                 // Обработка основного изображения
@@ -93,9 +93,11 @@ namespace LendingAPI.Controllers
                 {
                     try
                     {
+                        var datePath = post.PublishedAt.ToString("yyyy/MM/dd");
                         var fileBase = $"vk_{post.PublishedAt:yyyyMMdd_HHmmss}";
-                        var path = Path.Combine("wwwroot", "uploads");
-                        Directory.CreateDirectory(path);
+                        var relativeFolder = Path.Combine("uploads", "news", datePath);
+                        var absoluteFolder = Path.Combine("wwwroot", relativeFolder);
+                        Directory.CreateDirectory(absoluteFolder);
 
                         // Скачиваем изображение
                         using var httpClient = new HttpClient();
@@ -103,29 +105,24 @@ namespace LendingAPI.Controllers
                         using var image = Image.Load(imageBytes);
 
                         // Сохраняем оригинал
-                        var originalPath = Path.Combine(path, $"{fileBase}_original.jpg");
+                        var originalFileName = $"{fileBase}_original.jpg";
+                        var originalPath = Path.Combine(absoluteFolder, originalFileName);
                         await image.SaveAsJpegAsync(originalPath);
+                        news.ImageUrl = $"https://localhost:7243/{Path.Combine(relativeFolder, originalFileName).Replace("\\", "/")}";
 
                         // Сохраняем сжатые версии
                         var sizes = new[] { (512, 380), (256, 190), (128, 95) };
                         foreach (var (width, height) in sizes)
                         {
-                            var resizedPath = Path.Combine(path, $"{fileBase}_{width}x{height}.jpg");
-                            image.Mutate(x => x.Resize(width, height));
-                            await image.SaveAsJpegAsync(resizedPath);
-                        }
+                            var resizedFileName = $"{fileBase}_{width}x{height}.jpg";
+                            var resizedPath = Path.Combine(absoluteFolder, resizedFileName);
 
-                        // Добавляем пути к изображениям в NewsImage
-                        string folderPath = Path.Combine("uploads", "news", post.PublishedAt.ToString("yyyy/MM/dd"));
-                        Directory.CreateDirectory(Path.Combine("wwwroot", folderPath));
-                        var originalImagePath = Path.Combine(folderPath, $"{fileBase}_original.jpg");
+                            using var clone = image.Clone(ctx => ctx.Resize(width, height));
+                            await clone.SaveAsJpegAsync(resizedPath);
 
-                        news.ImageUrl = $"https://localhost:7243/{originalImagePath.Replace("\\", "/")}";
-                        foreach (var (width, height) in sizes)
-                        {
                             news.AdditionalImages.Add(new NewsImage
                             {
-                                Url = $"/uploads/{fileBase}_{width}x{height}.jpg"
+                                Url = $"https://localhost:7243/{Path.Combine(relativeFolder, resizedFileName).Replace("\\", "/")}"
                             });
                         }
                     }

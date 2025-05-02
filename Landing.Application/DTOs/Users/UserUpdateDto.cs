@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
-namespace Landing.Application.DTOs
+namespace Landing.Application.DTOs.Users
 {
     public class UserUpdateDto
     {
@@ -7,7 +7,7 @@ namespace Landing.Application.DTOs
         public string Email { get; set; } = string.Empty;
 
         [Required]
-        public DateTime BirthDate { get; set; } 
+        public DateTime BirthDate { get; set; }
     }
 
 }

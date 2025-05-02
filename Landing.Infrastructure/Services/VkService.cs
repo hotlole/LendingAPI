@@ -50,13 +50,14 @@ public class VkService
             var post = new VkPostDto
             {
                 Text = text ?? "",
-                PublishedAt = date
+                PublishedAt = date,
+                VkPostId = item.TryGetProperty("id", out var idProp) ? idProp.GetInt32().ToString() : "0"
             };
 
             if (item.TryGetProperty("attachments", out var attachments))
             {
                 // ЛОГИРУЕМ JSON вложений
-                var postId = item.TryGetProperty("id", out var idProp) ? idProp.GetInt32() : 0;
+                var postId = post.VkPostId;
                 var logDir = Path.Combine("vk_logs");
                 Directory.CreateDirectory(logDir);
                 var logPath = Path.Combine(logDir, $"vk_attachments_{postId}.json");

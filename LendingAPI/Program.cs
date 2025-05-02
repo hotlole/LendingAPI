@@ -166,12 +166,11 @@ if (app.Environment.IsDevelopment())
 }
 app.MapControllers();
 
+
 // --- Hangfire Dashboard ---
 app.UseHangfireDashboard("/hangfire", new DashboardOptions
 {
-    Authorization = new[] { new HangfireAuthorizationFilter(app.Services.GetRequiredService<IConfiguration>()) },
-    IgnoreAntiforgeryToken = true,
-    IsReadOnlyFunc = _ => false,
+    Authorization = new[] { new HangfireAuthorizationFilter(builder.Configuration) },
     AppPath = "/admin/login"
 });
 

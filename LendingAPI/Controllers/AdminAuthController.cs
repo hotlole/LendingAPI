@@ -52,6 +52,8 @@ public class AdminAuthController(ApplicationDbContext db, IConfiguration config)
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(
+            issuer: _config["JwtSettings:Issuer"],
+            audience: _config["JwtSettings:Audience"],
             claims: claims,
             expires: DateTime.UtcNow.AddHours(12),
             signingCredentials: creds
@@ -59,27 +61,27 @@ public class AdminAuthController(ApplicationDbContext db, IConfiguration config)
 
         var jwt = new JwtSecurityTokenHandler().WriteToken(token);
 
-        var hangfireUrl = $"{Request.Scheme}://{Request.Host}/hangfire?access_token={jwt}";
+        Response.Cookies.Append("hangfire_admin_token", jwt, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTime.UtcNow.AddHours(12)
+        });
 
-        var html = $"""
-        <div style="font-family:sans-serif;max-width:600px;margin:50px auto;text-align:center;">
-            <h2>Токен</h2>
-            <textarea readonly style="width:100%;height:150px;">{jwt}</textarea>
-            <div style="margin-top:20px;">
-                <a href="{hangfireUrl}" target="_blank" style="display:inline-block;padding:10px 20px;background:#4CAF50;color:white;text-decoration:none;border-radius:5px;">Перейти в Hangfire</a>
-            </div>
-        </div>
-    """;
-
-        return Content(html, "text/html", Encoding.UTF8);
+        return Redirect("/hangfire");
     }
-
-
-
-
     [HttpGet("logout")]
     public IActionResult Logout()
     {
+        Response.Cookies.Delete("hangfire_admin_token", new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict
+        });
+
         return Redirect("/admin/login");
     }
+
 }

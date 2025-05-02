@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Landing.Application.DTOs
+namespace Landing.Application.DTOs.Users
 {
     public class UserRegistrationDto
     {
