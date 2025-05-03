@@ -1,47 +1,35 @@
-﻿using Landing.Application.DTOs;
+﻿using Landing.Application.DTOs.Vk;
+using Landing.Application.Interfaces;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
-using System.Net.Http.Json;
 using System.Text.Json;
 
 public class VkService
 {
-    private readonly HttpClient _httpClient;
+    private readonly IVkApiClient _vkClient;
     private readonly string _token;
     private readonly string _version;
     private readonly string _groupId;
 
-    public VkService(IConfiguration config, HttpClient httpClient)
+    public VkService(IConfiguration config, IVkApiClient vkClient)
     {
-        _httpClient = httpClient;
+        _vkClient = vkClient;
         _token = config["Vk:ServiceToken"]!;
-        _version = "5.199";
         _groupId = config["Vk:GroupId"]!;
+        _version = "5.199";
     }
 
     public async Task<List<VkPostDto>> GetGroupPostsAsync(int count = 10)
     {
-        var url = $"https://api.vk.com/method/wall.get?owner_id=-{_groupId}&count={count}&access_token={_token}&v={_version}";
-        var responseJson = await _httpClient.GetFromJsonAsync<JsonElement>(url);
-
-        if (responseJson.TryGetProperty("error", out var error))
-        {
-            var msg = error.TryGetProperty("error_msg", out var errorMsg)
-                ? errorMsg.GetString()
-                : "Неизвестная ошибка VK API";
-
-            throw new Exception($"VK API error: {msg}");
-        }
-
-        if (!responseJson.TryGetProperty("response", out var response) ||
-            !response.TryGetProperty("items", out var items))
-        {
-            throw new Exception("VK API: отсутствует 'response.items'. Ответ: " + responseJson.ToString());
-        }
+        var response = await _vkClient.GetWallPostsAsync(
+            ownerId: "-" + _groupId,
+            count: count,
+            accessToken: _token,
+            version: _version
+        );
 
         var posts = new List<VkPostDto>();
 
-        foreach (var item in items.EnumerateArray())
+        foreach (var item in response.Response.Items)
         {
             var text = item.TryGetProperty("text", out var textProp) ? textProp.GetString() : string.Empty;
             var unixDate = item.TryGetProperty("date", out var dateProp) ? dateProp.GetInt32() : 0;
@@ -56,13 +44,14 @@ public class VkService
 
             if (item.TryGetProperty("attachments", out var attachments))
             {
-                // ЛОГИРУЕМ JSON вложений
+                // логирование вложений
                 var postId = post.VkPostId;
                 var logDir = Path.Combine("vk_logs");
                 Directory.CreateDirectory(logDir);
-                var logPath = Path.Combine(logDir, $"vk_attachments_{postId}.json");
-                File.WriteAllText(logPath, attachments.ToString());
+                File.WriteAllText(Path.Combine(logDir, $"vk_attachments_{postId}.json"), attachments.ToString());
+
                 post.AttachmentsRaw = attachments;
+
                 foreach (var attachment in attachments.EnumerateArray())
                 {
                     if (!attachment.TryGetProperty("type", out var typeProp)) continue;
@@ -94,23 +83,19 @@ public class VkService
                             }
                             break;
 
-
                         case "video":
                             if (attachment.TryGetProperty("video", out var video))
                             {
-                                // Превью
                                 post.VideoPreviewUrl = video.TryGetProperty("photo_800", out var preview800)
                                     ? preview800.GetString()
                                     : (video.TryGetProperty("photo_640", out var preview640) ? preview640.GetString() : null);
 
-                                // Плеер, если доступен
                                 if (video.TryGetProperty("player", out var playerUrl))
                                 {
                                     post.VideoUrl = playerUrl.GetString();
                                 }
                                 else
                                 {
-                                    // Собираем ссылку вручную
                                     var vid = video.TryGetProperty("id", out var videoIdProp) ? videoIdProp.GetInt32() : 0;
                                     var oid = video.TryGetProperty("owner_id", out var ownerIdProp) ? ownerIdProp.GetInt32() : 0;
                                     var accessKey = video.TryGetProperty("access_key", out var accessKeyProp) ? accessKeyProp.GetString() : null;
@@ -123,7 +108,6 @@ public class VkService
                                 }
                             }
                             break;
-
 
                         case "link":
                             if (attachment.TryGetProperty("link", out var link))

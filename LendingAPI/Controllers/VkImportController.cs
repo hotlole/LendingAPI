@@ -14,26 +14,21 @@ namespace LendingAPI.Controllers
     /// <summary>
     /// Контроллер для импорта новостей из группы ВКонтакте.
     /// </summary>
+    /// /// <summary>
+    /// Конструктор контроллера импорта из VK.
+    /// </summary>
+    /// <param name="vkService">Сервис для работы с VK API.</param>
+    /// <param name="context">Контекст базы данных.</param>
+    /// <param name="logger">Логгер.</param>
     [ApiController]
     [Route("api/[controller]")]
     [Authorize(Roles = "Admin")]
-    public class VkImportController : ControllerBase
+    public class VkImportController(VkService vkService, ApplicationDbContext context, ILogger<VkImportController> logger) : ControllerBase
     {
-        private readonly VkService _vkService;
-        private readonly ApplicationDbContext _context;
-        private readonly ILogger<VkImportController> _logger;
-        /// <summary>
-        /// Конструктор контроллера импорта из VK.
-        /// </summary>
-        /// <param name="vkService">Сервис для работы с VK API.</param>
-        /// <param name="context">Контекст базы данных.</param>
-        /// <param name="logger">Логгер.</param>
-        public VkImportController(VkService vkService, ApplicationDbContext context, ILogger<VkImportController> logger)
-        {
-            _vkService = vkService;
-            _context = context;
-            _logger = logger;
-        }
+        private readonly VkService _vkService = vkService;
+        private readonly ApplicationDbContext _context = context;
+        private readonly ILogger<VkImportController> _logger = logger;
+        
         /// <summary>
         /// Импортирует последние посты из группы VK.
         /// </summary>

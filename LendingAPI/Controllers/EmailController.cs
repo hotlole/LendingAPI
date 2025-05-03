@@ -8,16 +8,10 @@ namespace LendingAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class EmailController : ControllerBase
+    public class EmailController(IEmailService emailService, ApplicationDbContext context) : ControllerBase
     {
-        private readonly IEmailService _emailService;
-        private readonly ApplicationDbContext _context;
-
-        public EmailController(IEmailService emailService, ApplicationDbContext context)
-        {
-            _emailService = emailService;
-            _context = context;
-        }
+        private readonly IEmailService _emailService = emailService;
+        private readonly ApplicationDbContext _context = context;
 
         /// <summary>
         /// Подтверждение email по ссылке из письма.

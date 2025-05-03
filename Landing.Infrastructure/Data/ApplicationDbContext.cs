@@ -37,17 +37,7 @@ namespace Landing.Infrastructure.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            modelBuilder.Entity<NewsImage>()
-                .HasOne(i => i.News)
-                .WithMany(n => n.AdditionalImages)
-                .HasForeignKey(i => i.NewsId)
-                .OnDelete(DeleteBehavior.Cascade);
-            modelBuilder.Entity<News>()
-                .HasIndex(n => n.VkPostId)
-                .IsUnique()
-                .HasFilter("VkPostId IS NOT NULL");
-
-
+            
             modelBuilder.ApplyConfiguration(new EventConfiguration());
             modelBuilder.ApplyConfiguration(new OfflineEventConfiguration());
             modelBuilder.ApplyConfiguration(new EventAttendanceConfiguration());
@@ -55,6 +45,8 @@ namespace Landing.Infrastructure.Data
             modelBuilder.ApplyConfiguration(new UserConfiguration());
             modelBuilder.ApplyConfiguration(new CuratedEventConfiguration());
             modelBuilder.ApplyConfiguration(new RegularEventConfiguration());
+            modelBuilder.ApplyConfiguration(new NewsConfiguration());
+            modelBuilder.ApplyConfiguration(new NewsImageConfiguration());
         }
     }
 }

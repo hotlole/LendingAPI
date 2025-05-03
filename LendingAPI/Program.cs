@@ -20,7 +20,7 @@ using System.Reflection;
 using System.Text;
 using Landing.Core.Models.Events;
 using Landing.Core.Models.News;
-
+using Refit;
 var builder = WebApplication.CreateBuilder(args);
 
 // --- Конфигурация логгирования через Serilog ---
@@ -57,7 +57,13 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IUserTransactionService, UserTransactionService>();
 builder.Services.AddScoped<FileCleanupService>();
 builder.Services.AddScoped<ImageCompressionService>();
-builder.Services.AddHttpClient<VkService>();
+builder.Services.AddRefitClient<IVkApiClient>()
+    .ConfigureHttpClient(c =>
+    {
+        c.BaseAddress = new Uri("https://api.vk.com");
+    });
+
+builder.Services.AddTransient<VkService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddTransient<RelativePathResolver<Event>>();
 builder.Services.AddTransient<RelativePathResolver<RegularEvent>>();
@@ -94,6 +100,7 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
         });
     };
 });
+
 
 // --- Аутентификация через JWT ---
 ConfigureAuthentication(builder.Services, builder.Configuration);
@@ -159,9 +166,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "API v1");
-        c.HeadContent = """
-<link rel="stylesheet" href="/css/swagger-custom.css">
-""";
+        c.HeadContent = """<link rel="stylesheet" href="/css/swagger-custom.css">""";
     });
 }
 app.MapControllers();

@@ -15,19 +15,13 @@ namespace LandingAPI.Controllers
     /// </summary>
     [Route("api/[controller]")]
     [ApiController]
-    public class NewsController : ControllerBase
+    public class NewsController(NewsService newsService, IWebHostEnvironment environment, IMapper mapper, ImageCompressionService imageCompressionService) : ControllerBase
     {
-        private readonly NewsService _newsService;
-        private readonly IWebHostEnvironment _environment;
-        private readonly IMapper _mapper;
-        private readonly ImageCompressionService _imageCompressionService;
-        public NewsController(NewsService newsService, IWebHostEnvironment environment, IMapper mapper, ImageCompressionService imageCompressionService)
-        {
-            _newsService = newsService;
-            _environment = environment;
-            _mapper = mapper;
-            _imageCompressionService = imageCompressionService;
-        }
+        private readonly NewsService _newsService = newsService;
+        private readonly IWebHostEnvironment _environment = environment;
+        private readonly IMapper _mapper = mapper;
+        private readonly ImageCompressionService _imageCompressionService = imageCompressionService;
+        
         /// <summary>
         /// Получить список всех новостей с поддержкой поиска, сортировки и пагинации.
         /// </summary>

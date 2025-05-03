@@ -14,20 +14,14 @@ namespace Landing.API.Controllers
     /// </summary>
     [Route("api/events")]
     [ApiController]
-    public class EventController : ControllerBase
+    public class EventController(IEventRepository eventRepository, IMapper mapper,EventService eventService, ImageCompressionService imageCompressionService)
+        : ControllerBase
     {
-        private readonly IEventRepository _eventRepository;
-        private readonly IMapper _mapper;
-        private readonly EventService _eventService;
-        private readonly ImageCompressionService _imageCompressionService;
-        public EventController(IEventRepository eventRepository, IMapper mapper, EventService eventService,ImageCompressionService imageCompressionService)
-        {
-            _eventRepository = eventRepository;
-            _mapper = mapper;
-            _eventService = eventService;
-            _imageCompressionService = imageCompressionService;
-        }
-
+        private readonly IEventRepository _eventRepository = eventRepository;
+        private readonly IMapper _mapper = mapper;
+        private readonly EventService _eventService = eventService;
+        private readonly ImageCompressionService _imageCompressionService = imageCompressionService;
+       
         /// <summary>
         /// Получить список всех мероприятий.
         /// </summary>

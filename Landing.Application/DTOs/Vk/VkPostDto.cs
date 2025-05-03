@@ -3,7 +3,7 @@ using Landing.Core.Models.News;
 using System.Text.Json;
 using NewsModel = Landing.Core.Models.News.News;
 
-namespace Landing.Application.DTOs
+namespace Landing.Application.DTOs.Vk
 {
     [AutoMap(typeof(NewsModel))]
     public class VkPostDto

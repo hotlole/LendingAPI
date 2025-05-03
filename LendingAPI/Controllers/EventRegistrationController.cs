@@ -6,14 +6,9 @@ namespace LendingAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class EventRegistrationController : ControllerBase
+    public class EventRegistrationController(EventService eventService) : ControllerBase
     {
-        private readonly EventService _eventService;
-
-        public EventRegistrationController(EventService eventService)
-        {
-            _eventService = eventService;
-        }
+        private readonly EventService _eventService = eventService;
 
         /// <summary>
         /// Регистрация на мероприятие.

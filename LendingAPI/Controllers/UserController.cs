@@ -9,18 +9,10 @@ namespace LendingAPI.Controllers
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
-    public class UserController : ControllerBase
+    public class UserController(IUserTransactionService transactionService) : ControllerBase
     {
-        private readonly IUserTransactionService _transactionService;
-        /// <summary>
-        /// Конструктор контроллера.
-        /// </summary>
-        /// <param name="transactionService">Сервис для управления транзакциями пользователей</param>
-        public UserController(IUserTransactionService transactionService)
-        {
-            _transactionService = transactionService;
-        }
-
+        private readonly IUserTransactionService _transactionService = transactionService;
+       
         /// <summary>
         /// Добавление баллов пользователю.
         /// </summary>

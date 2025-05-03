@@ -22,26 +22,21 @@ namespace LandingAPI.Controllers
     /// </summary>
     [Route("api/[controller]")]
     [ApiController]
-    public class AuthController : ControllerBase
+    
+    public class AuthController(IConfiguration configuration, ApplicationDbContext context, IUserRepository userRepository, IEmailService emailService) : ControllerBase
     {
-        private readonly IConfiguration _configuration;
-        private readonly ApplicationDbContext _context;
-        private readonly IUserRepository _userRepository;
-        private readonly IEmailService _emailService;
         /// <summary>
         /// Конструктор контроллера авторизации.
         /// </summary>
         /// <param name="configuration">Конфигурация приложения</param>
         /// <param name="context">Контекст базы данных</param>
         /// <param name="userRepository">Репозиторий пользователей</param>
-        public AuthController(IConfiguration configuration, ApplicationDbContext context, IUserRepository userRepository, IEmailService emailService)
-        {
-            _configuration = configuration;
-            _context = context;
-            _userRepository = userRepository;
-            _emailService = emailService;
-        }
 
+        private readonly IConfiguration _configuration = configuration;
+        private readonly ApplicationDbContext _context = context;
+        private readonly IUserRepository _userRepository = userRepository;
+        private readonly IEmailService _emailService = emailService;
+        
         /// <summary>
         /// Авторизация пользователя.
         /// </summary>
