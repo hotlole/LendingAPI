@@ -74,7 +74,7 @@ builder.Services.AddAutoMapper(cfg =>
 builder.Services.AddFluentValidationAutoValidation()
                 .AddFluentValidationClientsideAdapters();
 builder.Services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
-
+builder.Services.AddValidatorsFromAssemblyContaining<CreateEventDtoValidator>();
 // --- Кастомизация ответа при ошибках валидации ---
 builder.Services.Configure<ApiBehaviorOptions>(options =>
 {

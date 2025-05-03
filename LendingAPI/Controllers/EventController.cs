@@ -74,7 +74,10 @@ namespace Landing.API.Controllers
                 // Сохраняем изображение
                 await using var stream = image.OpenReadStream();
                 var paths = await _imageCompressionService.SaveCompressedVersionsAsync(stream, image.FileName);
-                imageUrl = paths["original"]; // Путь до изображения, который будет сохранён в модели
+                var request = HttpContext.Request;
+                var baseUrl = $"{request.Scheme}://{request.Host}";
+                imageUrl = $"{baseUrl}/{paths["original"].TrimStart('/')}";
+
             }
 
             // Создаём сущность события

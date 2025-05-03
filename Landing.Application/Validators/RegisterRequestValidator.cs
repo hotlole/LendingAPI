@@ -43,6 +43,8 @@ namespace Landing.Application.Validators
                 .MinimumLength(6).WithMessage("Минимум 6 символов");
 
             RuleFor(x => x.BirthDate)
+                .LessThan(DateTime.Today)
+                .WithMessage("Дата рождения не может быть в будущем.")
                .NotEmpty().WithMessage("Дата рождения обязательна")
                .Must(BeValidDate).WithMessage("Неверный формат даты (Ожидается yyyy-MM-dd)");
         }
