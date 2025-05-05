@@ -15,6 +15,7 @@ using Landing.Application.Validators;
 using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Asp.Versioning;
 namespace LandingAPI.Controllers
 {
     /// <summary>
@@ -22,7 +23,7 @@ namespace LandingAPI.Controllers
     /// </summary>
     [Route("api/[controller]")]
     [ApiController]
-    
+    [ApiVersion("1.0")]
     public class AuthController(IConfiguration configuration, ApplicationDbContext context, IUserRepository userRepository, IEmailService emailService) : ControllerBase
     {
         /// <summary>

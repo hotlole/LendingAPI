@@ -1,4 +1,5 @@
-﻿using ClosedXML.Excel;
+﻿using Asp.Versioning;
+using ClosedXML.Excel;
 using DocumentFormat.OpenXml.InkML;
 using Landing.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
@@ -7,9 +8,11 @@ using Microsoft.EntityFrameworkCore;
 /// <summary>
 /// Контроллер для генерации административных отчетов.
 /// </summary>
+
 [ApiController]
 [Route("api/[controller]")]
 [Authorize(Roles = "Admin")]
+[ApiVersion("1.0")]
 public class AdminReportsController(ApplicationDbContext context) : ControllerBase
 {
     private readonly ApplicationDbContext _context = context;
@@ -124,8 +127,6 @@ public class AdminReportsController(ApplicationDbContext context) : ControllerBa
         }
 
         sheet2.Columns().AdjustToContents(); // автоширина
-
-
 
         using var stream = new MemoryStream();
         workbook.SaveAs(stream);

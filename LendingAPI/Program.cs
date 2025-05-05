@@ -21,6 +21,9 @@ using System.Text;
 using Landing.Core.Models.Events;
 using Landing.Core.Models.News;
 using Refit;
+using Asp.Versioning;
+using Asp.Versioning.ApiExplorer;
+using LandingAPI.Extensions;
 var builder = WebApplication.CreateBuilder(args);
 
 // --- Конфигурация логгирования через Serilog ---
@@ -33,9 +36,25 @@ builder.Host.UseSerilog();
 // --- Добавляем сервисы ---
 builder.Services.AddControllers()
     .AddNewtonsoftJson();
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+    options.ApiVersionReader = ApiVersionReader.Combine(
+        new UrlSegmentApiVersionReader(),
+        new HeaderApiVersionReader("X-API-Version"),
+        new QueryStringApiVersionReader("api-version")
+    );
+})
+.AddApiExplorer(options =>
+{
+    options.GroupNameFormat = "'v'VVV";
+    options.SubstituteApiVersionInUrl = true;
+});
 
 // --- Swagger ---
-ConfigureSwagger(builder.Services);
+builder.Services.ConfigureSwagger();
 
 // --- Подключение к БД ---
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -162,11 +181,16 @@ app.UseStaticFiles();
 
 if (app.Environment.IsDevelopment())
 {
+    var apiVersionDescriptionProvider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
+
     app.UseSwagger();
-    app.UseSwaggerUI(c =>
+    app.UseSwaggerUI(options =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "API v1");
-        c.HeadContent = """<link rel="stylesheet" href="/css/swagger-custom.css">""";
+        foreach (var description in apiVersionDescriptionProvider.ApiVersionDescriptions)
+        {
+            options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json", $"API {description.GroupName.ToUpperInvariant()}");
+        }
+        options.HeadContent = """<link rel="stylesheet" href="/css/swagger-custom.css">""";
     });
 }
 app.MapControllers();
@@ -221,43 +245,4 @@ static void ConfigureAuthentication(IServiceCollection services, IConfiguration 
     });
 }
 
-// --- Конфигурация Swagger ---
-static void ConfigureSwagger(IServiceCollection services)
-{
-    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-    var xmlFilePath = Path.Combine(AppContext.BaseDirectory, xmlFile);
 
-    services.AddSwaggerGen(opts =>
-    {
-        opts.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-        {
-            In = ParameterLocation.Header,
-            Description = "Введите JWT токен",
-            Name = "Authorization",
-            Type = SecuritySchemeType.ApiKey
-        });
-
-        opts.AddSecurityRequirement(new OpenApiSecurityRequirement
-        {
-            {
-                new OpenApiSecurityScheme
-                {
-                    Reference = new OpenApiReference
-                    {
-                        Type = ReferenceType.SecurityScheme,
-                        Id = "Bearer"
-                    }
-                },
-                new List<string>()
-            }
-        });
-
-        opts.SchemaFilter<EnumDescriptionSchemaFilter>();
-        opts.CustomSchemaIds(type => type.FullName);
-        opts.IncludeXmlComments(xmlFilePath, true);
-        opts.UseAllOfToExtendReferenceSchemas();
-        opts.UseAllOfForInheritance();
-        opts.UseOneOfForPolymorphism();
-        opts.SelectDiscriminatorNameUsing(_ => "$type");
-    });
-}
