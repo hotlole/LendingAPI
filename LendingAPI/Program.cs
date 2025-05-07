@@ -36,6 +36,7 @@ builder.Host.UseSerilog();
 // --- Добавляем сервисы ---
 builder.Services.AddControllers()
     .AddNewtonsoftJson();
+builder.Services.ConfigureHealthChecks(builder.Configuration);
 builder.Services.AddApiVersioning(options =>
 {
     options.DefaultApiVersion = new ApiVersion(1, 0);
@@ -203,6 +204,13 @@ app.UseHangfireDashboard("/hangfire", new DashboardOptions
     AppPath = "/admin/login"
 });
 
+// --- HealthChecks ---
+app.UseHealthChecksAndUI();
+app.MapGet("/monitoring", context =>
+{
+    context.Response.Redirect("/health-ui", permanent: false);
+    return Task.CompletedTask;
+});
 
 // --- Планировщик задач ---
 RecurringJob.AddOrUpdate<FileCleanupService>(
